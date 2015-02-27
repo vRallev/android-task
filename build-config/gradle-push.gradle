@@ -1,0 +1,125 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+def isReleaseBuild() {
+    return VERSION_NAME.contains("SNAPSHOT") == false
+}
+
+def isLocal() {
+    return hasProperty('local') ? Boolean.parseBoolean(getProperty('local')) : true;
+}
+
+def getReleaseRepositoryUrl() {
+    if (isLocal()) {
+        return hasProperty('RELEASE_REPOSITORY_LOCAL') ? RELEASE_REPOSITORY_LOCAL : "file://${System.env.HOME}/.m2/repository"
+    } else {
+        return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+    }
+}
+
+def getSnapshotRepositoryUrl() {
+    if (isLocal()) {
+        return hasProperty('SNAPSHOT_REPOSITORY_LOCAL') ? SNAPSHOT_REPOSITORY_LOCAL : "file://${System.env.HOME}/.m2/repository"
+    } else {
+        return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL : "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+}
+
+def getRepositoryUsername() {
+    return hasProperty('SONATYPE_USERNAME') ? SONATYPE_USERNAME : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('SONATYPE_PASSWORD') ? SONATYPE_PASSWORD : ""
+}
+
+afterEvaluate { project ->
+    uploadArchives {
+        //noinspection GradleMisplacedStatement
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                pom.groupId = 'net.vrallev.android'
+                pom.artifactId = 'android-task'
+                pom.version = VERSION_NAME
+
+                repository(url: getReleaseRepositoryUrl()) {
+                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                }
+                snapshotRepository(url: getSnapshotRepositoryUrl()) {
+                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                }
+
+                pom.project {
+                    name 'Android-Task'
+                    packaging 'aar'
+                    description 'Android library to handle tasks in the background.'
+                    url 'https://github.com/vRallev/android-task'
+                    inceptionYear '2015'
+
+                    scm {
+                        url 'https://github.com/vRallev/android-task'
+                        connection 'scm:git:git://github.com/vRallev/android-task.git'
+                        developerConnection 'scm:git:git@github.com:vRallev/android-task.git'
+                    }
+
+                    developers {
+                        developer {
+                            name 'Ralf Wondratschek'
+                            email 'r.wondr@gmail.com'
+                            id 'rwondratschek'
+                            url 'http://vrallev.net'
+                            timezone '+1'
+                            roles {
+                                role 'developer'
+                            }
+                        }
+                    }
+
+                    licenses {
+                        license {
+                            name 'Apache License version 2.0'
+                            url 'https://github.com/vRallev/android-task/blob/master/LICENSE'
+                            distribution 'repo'
+                        }
+                    }
+
+                    issueManagement {
+                        system 'GitHub Issues'
+                        url 'https://github.com/vRallev/android-task/issues'
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
+        sign configurations.archives
+    }
+
+    task androidJavadocs2(type: Javadoc) {
+        failOnError = false
+        source = android.sourceSets.main.java.sourceFiles
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    }
+
+    task androidJavadocsJar2(type: Jar, dependsOn: androidJavadocs2) {
+        classifier = 'javadoc'
+        //basename = artifact_id
+        from androidJavadocs2.destinationDir
+    }
+
+    task androidSourcesJar2(type: Jar) {
+        classifier = 'sources'
+        //basename = artifact_id
+        from android.sourceSets.main.java.sourceFiles
+    }
+
+    artifacts {
+        //archives packageReleaseJar
+        archives androidSourcesJar2
+        archives androidJavadocsJar2
+    }
+}

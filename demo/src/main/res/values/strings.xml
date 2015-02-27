@@ -1,0 +1,4 @@
+<resources>
+    <string name="demo">Task Demo</string>
+    <string name="rotate_the_device">Rotate the device.\n\nTask runs 5 seconds.</string>
+</resources>
