@@ -58,7 +58,7 @@ new Builder()
 	.asSingleton();
 ```
 
-The `TaskExecutor` returns an ID. You can restore this ID on `onCreate(Bundle savedInstanceState` and to find your `Task`.
+The `TaskExecutor` returns an ID. You can restore this ID in `onCreate(Bundle savedInstanceState` and to find your `Task`.
 
 ```java
 @Override
@@ -69,6 +69,7 @@ protected void onCreate(Bundle savedInstanceState) {
         int taskId = savedInstanceState.getInt(TASK_ID_KEY, -1);
         MyTask task = TaskExecutor.getInstance().getTask(taskId);
     }
+}
 ```
 
 How it works
