@@ -48,7 +48,7 @@ public class MyTask extends Task<Integer> {
 Advanced
 --------
 
-You can create your own `TaskExecutor` instance, if you want to change the bavior. 
+You can create your own `TaskExecutor` instance, if you want to change the behavior. 
 
 ```java
 new Builder()
@@ -56,6 +56,19 @@ new Builder()
 	.setPostResult(PostResult.ON_ANY_THREAD) // default PostResult.UI_THREAD
 	.build()
 	.asSingleton();
+```
+
+The `TaskExecutor` returns an ID. You can restore this ID on `onCreate(Bundle savedInstanceState` and to find your `Task`.
+
+```java
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    if (savedInstanceState != null) {
+        int taskId = savedInstanceState.getInt(TASK_ID_KEY, -1);
+        MyTask task = TaskExecutor.getInstance().getTask(taskId);
+    }
 ```
 
 How it works
