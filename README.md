@@ -58,7 +58,7 @@ new Builder()
 	.asSingleton();
 ```
 
-The `TaskExecutor` returns an ID. You can restore this ID in `onCreate(Bundle savedInstanceState` and to find your `Task`.
+The `TaskExecutor` returns an ID. You can restore this ID in `onCreate(Bundle savedInstanceState` to find your `Task`.
 
 ```java
 @Override
@@ -106,5 +106,5 @@ License
     limitations under the License.
 
 
-[1]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=net.vrallev.android&a=android-sdk&v=LATEST
+[1]: http://search.maven.org/#search|gav|1|g:"net.vrallev.android"%20AND%20a:"android-task"
 [2]: https://github.com/vRallev/SQRL-Protocol/tree/master/android-sdk/src/main/java/net/vrallev/android/task/demo
