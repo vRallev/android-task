@@ -1,5 +1,6 @@
 package net.vrallev.android.task;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -33,6 +34,7 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
             result = (TaskCacheFragmentSupport) fragment;
         } else {
             result = new TaskCacheFragmentSupport();
+            result.mActivity = activity;
             fragmentManager.beginTransaction()
                 .add(result, TAG)
                 .commitAllowingStateLoss();
@@ -43,11 +45,18 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
 
     private final Map<String, Object> mCache;
     private boolean mCanSaveInstanceState;
+    private Activity mActivity;
 
     public TaskCacheFragmentSupport() {
         setRetainInstance(true);
 
         mCache = Collections.synchronizedMap(new HashMap<String, Object>());
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        mActivity = activity;
+        super.onAttach(activity);
     }
 
     @Override
@@ -75,6 +84,14 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
                 targetMethodFinder.invoke(target, pendingResult.getResult());
             }
         }
+    }
+
+    @Override
+    public void onDetach() {
+        if (mActivity.isFinishing()) {
+            mActivity = null;
+        }
+        super.onDetach();
     }
 
     @Override
@@ -115,5 +132,10 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
         }
 
         list.add(pendingResult);
+    }
+
+    @Override
+    public Activity getParentActivity() {
+        return mActivity;
     }
 }

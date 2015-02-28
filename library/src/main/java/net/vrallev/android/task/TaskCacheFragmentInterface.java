@@ -20,5 +20,5 @@ public interface TaskCacheFragmentInterface {
 
     public void putPendingResult(TaskPendingResult pendingResult);
 
-    public Activity getActivity();
+    public Activity getParentActivity();
 }

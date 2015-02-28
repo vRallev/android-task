@@ -22,14 +22,6 @@ import java.util.Map;
 public final class TaskCacheFragment extends Fragment implements TaskCacheFragmentInterface {
 
     private static final String TAG = "TaskCacheFragment";
-    private final Map<String, Object> mCache;
-    private boolean mCanSaveInstanceState;
-
-    public TaskCacheFragment() {
-        setRetainInstance(true);
-
-        mCache = Collections.synchronizedMap(new HashMap<String, Object>());
-    }
 
     /*package*/ static TaskCacheFragment getFrom(Activity activity) {
         TaskCacheFragment result;
@@ -41,12 +33,29 @@ public final class TaskCacheFragment extends Fragment implements TaskCacheFragme
             result = (TaskCacheFragment) fragment;
         } else {
             result = new TaskCacheFragment();
+            result.mActivity = activity;
             fragmentManager.beginTransaction()
                 .add(result, TAG)
                 .commitAllowingStateLoss();
         }
 
         return result;
+    }
+
+    private final Map<String, Object> mCache;
+    private boolean mCanSaveInstanceState;
+    private Activity mActivity;
+
+    public TaskCacheFragment() {
+        setRetainInstance(true);
+
+        mCache = Collections.synchronizedMap(new HashMap<String, Object>());
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        mActivity = activity;
+        super.onAttach(activity);
     }
 
     @Override
@@ -74,6 +83,14 @@ public final class TaskCacheFragment extends Fragment implements TaskCacheFragme
                 targetMethodFinder.invoke(target, pendingResult.getResult());
             }
         }
+    }
+
+    @Override
+    public void onDetach() {
+        if (mActivity.isFinishing()) {
+            mActivity = null;
+        }
+        super.onDetach();
     }
 
     @Override
@@ -114,5 +131,10 @@ public final class TaskCacheFragment extends Fragment implements TaskCacheFragme
         }
 
         list.add(pendingResult);
+    }
+
+    @Override
+    public Activity getParentActivity() {
+        return mActivity;
     }
 }

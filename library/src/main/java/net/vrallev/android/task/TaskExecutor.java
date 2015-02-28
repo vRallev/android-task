@@ -67,6 +67,7 @@ public final class TaskExecutor {
 
         task.setKey(key);
         task.setTaskExecutor(this);
+        task.setCacheFragment(cacheFragment);
 
         mTasks.put(key, task);
 
@@ -150,7 +151,7 @@ public final class TaskExecutor {
                 } else {
                     final Pair<Method, Object> target = targetMethodFinder.getMethod(cacheFragment, targetMethodFinder.getResultType(result, mTask));
                     if (target != null) {
-                        cacheFragment.getActivity().runOnUiThread(new Runnable() {
+                        cacheFragment.getParentActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 targetMethodFinder.invoke(target, result);

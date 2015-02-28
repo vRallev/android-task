@@ -33,7 +33,7 @@ import java.util.List;
         } else {
             resultType = findReturnType(task.getClass());
             if (resultType == null) {
-                Log.e(TAG, "Couldn't find result type");
+                Log.w(TAG, "Couldn't find result type");
                 return null;
             }
         }
@@ -42,9 +42,9 @@ import java.util.List;
     }
 
     public Pair<Method, Object> getMethod(TaskCacheFragmentInterface cacheFragment, Class<?> resultType) {
-        Activity activity = cacheFragment.getActivity();
+        Activity activity = cacheFragment.getParentActivity();
         if (activity == null) {
-            Log.e(TAG, "Activity is null, can't find target");
+            Log.w(TAG, "Activity is null, can't find target");
             return null;
         }
 
@@ -56,7 +56,7 @@ import java.util.List;
         }
 
         if (pair == null) {
-            Log.e(TAG, "Didn't find annotated method with correct result type");
+            Log.w(TAG, "Didn't find annotated method with correct result type");
         }
         return pair;
     }
@@ -123,7 +123,7 @@ import java.util.List;
             return pair;
         }
 
-        return findMethodInFragmentManager(fragment.getFragmentManager(), resultType, annotation);
+        return findMethodInFragmentManager(fragment.getChildFragmentManager(), resultType, annotation);
     }
 
     private static Pair<Method, Object> findMethodInFragmentManager(FragmentManager fragmentManager, Class<?> resultType, Class<? extends Annotation> annotation) {
