@@ -1,13 +1,16 @@
 package net.vrallev.android.task;
 
 import android.app.Activity;
+import android.app.Application;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.util.Pair;
 import android.util.SparseArray;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @SuppressWarnings("UnusedDeclaration")
 public final class TaskExecutor {
+
+    private static final String TAG = "TaskExecutor";
 
     private static final AtomicInteger TASK_COUNTER = new AtomicInteger(0);
 
@@ -37,14 +42,18 @@ public final class TaskExecutor {
     }
 
     private ExecutorService mExecutorService;
-    private PostResult mPostResult;
+    private final PostResult mPostResult;
+    private final TaskCacheFragmentInterface.Factory mCacheFactory;
 
     private SparseArray<Task<?>> mTasks;
     private TargetMethodFinder mTargetMethodFinder;
 
-    private TaskExecutor(ExecutorService executorService, PostResult postResult) {
+    private Application mApplication;
+
+    private TaskExecutor(ExecutorService executorService, PostResult postResult, TaskCacheFragmentInterface.Factory factory) {
         mExecutorService = executorService;
         mPostResult = postResult;
+        mCacheFactory = factory;
 
         mTasks = new SparseArray<>();
         mTargetMethodFinder = new TargetMethodFinder(TaskResult.class);
@@ -55,14 +64,14 @@ public final class TaskExecutor {
     }
 
     public synchronized int execute(Task<?> task, Activity callback) {
-        if (callback instanceof FragmentActivity) {
-            return executeInner(task, TaskCacheFragmentSupport.getFrom((FragmentActivity) callback));
-        } else {
-            return executeInner(task, TaskCacheFragment.getFrom(callback));
-        }
+        return executeInner(task, callback, mCacheFactory.create(callback));
     }
 
-    private synchronized int executeInner(Task<?> task, TaskCacheFragmentInterface cacheFragment) {
+    private synchronized int executeInner(Task<?> task, Activity activity, TaskCacheFragmentInterface cacheFragment) {
+        if (mApplication == null) {
+            mApplication = activity.getApplication();
+        }
+
         int key = TASK_COUNTER.incrementAndGet();
 
         task.setKey(key);
@@ -71,7 +80,9 @@ public final class TaskExecutor {
 
         mTasks.put(key, task);
 
-        mExecutorService.execute(new TaskRunnable<>(task, cacheFragment));
+        TaskRunnable<?> taskRunnable = new TaskRunnable<>(task, cacheFragment);
+        mApplication.registerActivityLifecycleCallbacks(taskRunnable);
+        mExecutorService.execute(taskRunnable);
 
         return key;
     }
@@ -82,7 +93,10 @@ public final class TaskExecutor {
     }
 
     private synchronized void removeTask(Task<?> task) {
-        mTasks.removeAt(mTasks.indexOfValue(task));
+        int index = mTasks.indexOfValue(task);
+        if (index >= 0) {
+            mTasks.removeAt(index);
+        }
     }
 
     public TaskExecutor asSingleton() {
@@ -113,7 +127,7 @@ public final class TaskExecutor {
         mTargetMethodFinder.post(cacheFragment, result, task);
     }
 
-    private final class TaskRunnable <T> implements Runnable {
+    private final class TaskRunnable <T> implements Runnable, Application.ActivityLifecycleCallbacks {
 
         private final Task<T> mTask;
         private final WeakReference<TaskCacheFragmentInterface> mWeakReference;
@@ -125,47 +139,124 @@ public final class TaskExecutor {
 
         @Override
         public void run() {
-            final T result = mTask.execute();
+            final T result = mTask.executeInner();
+
+            final TaskCacheFragmentInterface cacheFragment = mWeakReference.get();
+            if (cacheFragment != null) {
+                postResult(result, cacheFragment);
+            }
+            // else wait for onCreate of activity
+        }
+
+        private void postResult(final T result, TaskCacheFragmentInterface cacheFragment) {
             if (TaskExecutor.this.isShutdown()) {
                 return;
             }
 
-            TaskExecutor.this.removeTask(mTask);
+            removeTask(mTask);
 
-            final TargetMethodFinder targetMethodFinder = TaskExecutor.this.mTargetMethodFinder;
-
-            final TaskCacheFragmentInterface cacheFragment = mWeakReference.get();
-            if (cacheFragment == null) {
-                return;
-            }
-
-            if (TaskExecutor.this.mPostResult.equals(PostResult.IMMEDIATELY)) {
+            if (mPostResult.equals(PostResult.IMMEDIATELY)) {
+                mApplication.unregisterActivityLifecycleCallbacks(this);
                 TaskExecutor.this.postResultNow(cacheFragment, result, mTask);
                 return;
             }
 
             if (cacheFragment.canSaveInstanceState()) {
-                if (TaskExecutor.this.mPostResult.equals(PostResult.ON_ANY_THREAD)) {
+                mApplication.unregisterActivityLifecycleCallbacks(this);
+
+                if (mPostResult.equals(PostResult.ON_ANY_THREAD)) {
                     TaskExecutor.this.postResultNow(cacheFragment, result, mTask);
 
                 } else {
-                    final Pair<Method, Object> target = targetMethodFinder.getMethod(cacheFragment, targetMethodFinder.getResultType(result, mTask));
+                    final Pair<Method, Object> target = mTargetMethodFinder.getMethod(cacheFragment, mTargetMethodFinder.getResultType(result, mTask));
                     if (target != null) {
                         cacheFragment.getParentActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                targetMethodFinder.invoke(target, result);
+                                mTargetMethodFinder.invoke(target, result);
                             }
                         });
                     }
                 }
 
             } else {
-                final Class<?> resultType = targetMethodFinder.getResultType(result, mTask);
+                final Class<?> resultType = mTargetMethodFinder.getResultType(result, mTask);
                 if (resultType != null) {
                     cacheFragment.putPendingResult(new TaskPendingResult(resultType, result));
                 }
             }
+        }
+
+        @Override
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+            if (savedInstanceState == null || !mTask.isFinished()) {
+                return;
+            }
+
+            int key = savedInstanceState.getInt(String.valueOf(mTask.getKey()), -1);
+            if (key == -1) {
+                mApplication.unregisterActivityLifecycleCallbacks(this);
+                return;
+            }
+
+            if (key != mTask.getKey()) {
+                return;
+            }
+
+            mApplication.unregisterActivityLifecycleCallbacks(this);
+
+            TaskCacheFragmentInterface cacheFragment = mCacheFactory.create(activity);
+            List<TaskPendingResult> list = cacheFragment.get(TaskCacheFragmentInterface.PENDING_RESULT_KEY);
+            if (list == null || list.isEmpty()) {
+                try {
+                    postResult(mTask.getResult(), cacheFragment);
+                } catch (InterruptedException e) {
+                    Log.e(TAG, "getResult failed", e);
+                }
+            }
+        }
+
+        @Override
+        public void onActivityStarted(Activity activity) {
+            if (!mTask.isFinished()) {
+                return;
+            }
+
+            TaskCacheFragmentInterface cacheFragment = mCacheFactory.create(activity);
+            List<TaskPendingResult> list = cacheFragment.get(TaskCacheFragmentInterface.PENDING_RESULT_KEY);
+            if (list != null && !list.isEmpty()) {
+                mApplication.unregisterActivityLifecycleCallbacks(this);
+            }
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+            // do nothing
+        }
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+            // do nothing
+        }
+
+        @Override
+        public void onActivityStopped(Activity activity) {
+            // do nothing
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+            TaskCacheFragmentInterface fragment = mWeakReference.get();
+            if (fragment == null || fragment.getParentActivity() != activity) {
+                return;
+            }
+
+            outState.putInt(String.valueOf(mTask.getKey()), mTask.getKey());
+        }
+
+        @Override
+        public void onActivityDestroyed(Activity activity) {
+            // do nothing
         }
     }
 
@@ -173,6 +264,7 @@ public final class TaskExecutor {
 
         private PostResult mPostResult;
         private ExecutorService mExecutorService;
+        private TaskCacheFragmentInterface.Factory mCacheFactory;
 
         public Builder() {
 
@@ -188,6 +280,11 @@ public final class TaskExecutor {
             return this;
         }
 
+        public Builder setCacheFactory(TaskCacheFragmentInterface.Factory cacheFactory) {
+            mCacheFactory = cacheFactory;
+            return this;
+        }
+
         public TaskExecutor build() {
             if (mPostResult == null) {
                 mPostResult = PostResult.UI_THREAD;
@@ -195,7 +292,10 @@ public final class TaskExecutor {
             if (mExecutorService == null) {
                 mExecutorService = Executors.newCachedThreadPool();
             }
-            return new TaskExecutor(mExecutorService, mPostResult);
+            if (mCacheFactory == null) {
+                mCacheFactory = TaskCacheFragmentInterface.DEFAULT_FACTORY;
+            }
+            return new TaskExecutor(mExecutorService, mPostResult, mCacheFactory);
         }
     }
 

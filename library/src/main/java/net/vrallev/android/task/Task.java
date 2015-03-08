@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author rwondratschek
@@ -14,11 +15,19 @@ public abstract class Task<RESULT> {
 
     protected abstract RESULT execute();
 
+    private final CountDownLatch mCountDownLatch;
+
     private volatile boolean mCancelled;
 
     private int mKey = -1;
     private TaskExecutor mTaskExecutor;
     private WeakReference<TaskCacheFragmentInterface> mCacheFragment;
+
+    private RESULT mResult;
+
+    public Task() {
+        mCountDownLatch = new CountDownLatch(1);
+    }
 
     /*package*/ final void setKey(int key) {
         mKey = key;
@@ -32,6 +41,12 @@ public abstract class Task<RESULT> {
         mCacheFragment = new WeakReference<>(cacheFragment);
     }
 
+    /*package*/ final RESULT executeInner() {
+        mResult = execute();
+        mCountDownLatch.countDown();
+        return mResult;
+    }
+
     public final int getKey() {
         return mKey;
     }
@@ -42,6 +57,15 @@ public abstract class Task<RESULT> {
 
     public final boolean isCancelled() {
         return mCancelled || Thread.currentThread().isInterrupted();
+    }
+
+    public RESULT getResult() throws InterruptedException {
+        mCountDownLatch.await();
+        return mResult;
+    }
+
+    public final boolean isFinished() {
+        return mCountDownLatch.getCount() == 0;
     }
 
     protected final Activity getActivity() {

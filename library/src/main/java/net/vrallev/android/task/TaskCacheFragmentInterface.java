@@ -1,6 +1,7 @@
 package net.vrallev.android.task;
 
 import android.app.Activity;
+import android.support.v4.app.FragmentActivity;
 
 /**
  * @author rwondratschek
@@ -21,4 +22,19 @@ public interface TaskCacheFragmentInterface {
     public void putPendingResult(TaskPendingResult pendingResult);
 
     public Activity getParentActivity();
+
+    public static interface Factory {
+        public TaskCacheFragmentInterface create(Activity activity);
+    }
+
+    public static final Factory DEFAULT_FACTORY = new Factory() {
+        @Override
+        public TaskCacheFragmentInterface create(Activity activity) {
+            if (activity instanceof FragmentActivity) {
+                return TaskCacheFragmentSupport.getFrom((FragmentActivity) activity);
+            } else {
+                return TaskCacheFragment.getFrom(activity);
+            }
+        }
+    };
 }
