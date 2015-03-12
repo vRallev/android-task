@@ -43,7 +43,7 @@ public class FragmentTestActivity extends FragmentActivity {
 
             } else {
                 mTaskId = savedInstanceState.getInt(TASK_ID_KEY, -1);
-                mTask = TaskExecutor.getInstance().getTask(mTaskId);
+                mTask = (SimpleTask) TaskExecutor.getInstance().getTask(mTaskId);
             }
         }
 
@@ -59,7 +59,7 @@ public class FragmentTestActivity extends FragmentActivity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     if (mTaskId != -1) {
-                        SimpleTask task = TaskExecutor.getInstance().getTask(mTaskId);
+                        SimpleTask task = (SimpleTask) TaskExecutor.getInstance().getTask(mTaskId);
                         if (task != null) {
                             task.cancel();
                         }

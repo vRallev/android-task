@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 
 import java.lang.ref.WeakReference;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -18,10 +19,12 @@ public abstract class Task<RESULT> {
     private final CountDownLatch mCountDownLatch;
 
     private volatile boolean mCancelled;
+    private volatile boolean mFinished;
 
     private int mKey = -1;
     private TaskExecutor mTaskExecutor;
     private WeakReference<TaskCacheFragmentInterface> mCacheFragment;
+    private String mAnnotationId;
 
     private RESULT mResult;
 
@@ -41,10 +44,22 @@ public abstract class Task<RESULT> {
         mCacheFragment = new WeakReference<>(cacheFragment);
     }
 
+    /*package*/ final void setAnnotationId(String annotationId) {
+        mAnnotationId = annotationId;
+    }
+
+    /*package*/ final String getAnnotationId() {
+        return mAnnotationId;
+    }
+
     /*package*/ final RESULT executeInner() {
         mResult = execute();
         mCountDownLatch.countDown();
         return mResult;
+    }
+
+    /*packacke*/ final void setFinished() {
+        mFinished = true;
     }
 
     public final int getKey() {
@@ -64,8 +79,12 @@ public abstract class Task<RESULT> {
         return mResult;
     }
 
+    public final boolean isExecuting() {
+        return mCountDownLatch.getCount() > 0;
+    }
+
     public final boolean isFinished() {
-        return mCountDownLatch.getCount() == 0;
+        return mFinished;
     }
 
     protected final Activity getActivity() {
@@ -111,5 +130,11 @@ public abstract class Task<RESULT> {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.US, "%s{mKey=%d, executing=%b, finished=%b, cancelled=%b",
+                getClass().getSimpleName(), mKey, isExecuting(), isFinished(), isCancelled());
     }
 }

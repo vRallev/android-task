@@ -6,13 +6,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.util.Pair;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -72,18 +69,15 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
         mCanSaveInstanceState = true;
 
         List<TaskPendingResult> list = get(PENDING_RESULT_KEY);
-        if (list != null) {
-            Iterator<TaskPendingResult> iterator = list.iterator();
-            TargetMethodFinder targetMethodFinder = new TargetMethodFinder(TaskResult.class);
-
-            while (iterator.hasNext()) {
-                TaskPendingResult pendingResult = iterator.next();
-                iterator.remove();
-
-                Pair<Method, Object> target = targetMethodFinder.getMethod(this, pendingResult.getResultType());
-                targetMethodFinder.invoke(target, pendingResult.getResult());
-            }
+        if (list != null && !list.isEmpty()) {
+            TaskCacheFragmentInterface.Helper.postPendingResults(list, this);
         }
+    }
+
+    @Override
+    public void onStop() {
+        mCanSaveInstanceState = false;
+        super.onStop();
     }
 
     @Override

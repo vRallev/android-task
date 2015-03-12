@@ -1,48 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:padding="24dp">
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/button_default_activity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:onClick="onClick"
-        android:text="Test default activity"
-        tools:ignore="HardcodedText"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <Button
-        android:id="@+id/button_support_fragment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="16dp"
-        android:onClick="onClick"
-        android:text="Test support fragment"
-        tools:ignore="HardcodedText"/>
+        <Button
+            android:id="@+id/button_default_activity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:onClick="onClick"
+            android:text="Test default activity"
+            tools:ignore="HardcodedText"/>
 
-    <Button
-        android:id="@+id/button_integer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="16dp"
-        android:onClick="onClick"
-        android:text="Test integer task"
-        tools:ignore="HardcodedText"/>
+        <Button
+            android:id="@+id/button_support_fragment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:onClick="onClick"
+            android:text="Test support fragment"
+            tools:ignore="HardcodedText"/>
 
-    <Button
-        android:id="@+id/button_shutdown_executor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="16dp"
-        android:onClick="onClick"
-        android:text="Shutdown executor"
-        tools:ignore="HardcodedText"/>
+        <Button
+            android:id="@+id/button_integer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:onClick="onClick"
+            android:text="Test integer task"
+            tools:ignore="HardcodedText"/>
 
-</LinearLayout>
+        <Button
+            android:id="@+id/button_annotation_with_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:onClick="onClick"
+            android:text="Explicit method name"
+            tools:ignore="HardcodedText"/>
+
+        <Button
+            android:id="@+id/button_get_all_tasks"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:onClick="onClick"
+            android:text="Get all tasks"
+            tools:ignore="HardcodedText"/>
+
+        <Button
+            android:id="@+id/button_shutdown_executor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:onClick="onClick"
+            android:text="Shutdown executor"
+            tools:ignore="HardcodedText"/>
+
+    </LinearLayout>
+</ScrollView>

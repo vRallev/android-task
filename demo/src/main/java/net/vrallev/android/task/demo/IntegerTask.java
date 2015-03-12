@@ -13,7 +13,7 @@ public class IntegerTask extends Task<Integer> {
 
     @Override
     protected Integer execute() {
-        int sleep = new Random().nextInt(1000);
+        int sleep = new Random().nextInt(1000) + 2000;
         SystemClock.sleep(sleep);
 
         return sleep;

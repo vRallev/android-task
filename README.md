@@ -10,7 +10,7 @@ Download [the latest version][1] or grab via Gradle:
 
 ```groovy
 dependencies {
-    compile 'net.vrallev.android:android-task:1.0.2'
+    compile 'net.vrallev.android:android-task:1.0.3'
 }
 ```
 
@@ -23,7 +23,7 @@ The class `TaskExecutor` serves as entry point. Your background actions need to 
 public class MyActivity extends Activity {
 	
 	@Override
-	protected void onCreate(Bund savedInstanceState) {
+	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		Task myTask = new MyTask();
@@ -69,6 +69,29 @@ protected void onCreate(Bundle savedInstanceState) {
         int taskId = savedInstanceState.getInt(TASK_ID_KEY, -1);
         MyTask task = TaskExecutor.getInstance().getTask(taskId);
     }
+}
+```
+
+A callback method can have a second parameter to get the specific `Task` instance.
+
+```java
+@TaskResult
+public void onResult(Integer result, MyTask task) {
+	// handle result, this method gets called on the UI thread and only if the activity is visible
+}
+```
+
+You can annotate the callback method with a concrete ID, if you want to reuse a `Task` but provide different callbacks. **Attention:** If your callback method has an ID, then a `Task` with submitted without an ID won't find this callback method.
+
+```java
+public void startTask() {
+	Task myTask = new MyTask();
+	TaskExecutor.getInstance().execute(myTask, this, "my_id");
+}
+
+@TaskResult(id = "my_id")
+public void onResult(Integer result, MyTask task) {
+	// handle result, this method gets called on the UI thread and only if the activity is visible
 }
 ```
 

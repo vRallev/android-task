@@ -12,3 +12,10 @@ allprojects {
         jcenter()
     }
 }
+
+ext {
+    compileSdkVersion = 22
+    minSdkVersion = 14
+    buildToolsVersion = "22"
+}
+

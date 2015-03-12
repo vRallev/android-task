@@ -2,11 +2,15 @@ package net.vrallev.android.task;
 
 import android.app.Activity;
 import android.support.v4.app.FragmentActivity;
+import android.util.Pair;
+
+import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * @author rwondratschek
  */
-@SuppressWarnings("UnusedDeclaration")
+@SuppressWarnings({"UnusedDeclaration", "UnnecessaryInterfaceModifier"})
 public interface TaskCacheFragmentInterface {
 
     public static final String PENDING_RESULT_KEY = "PENDING_RESULT_KEY";
@@ -37,4 +41,19 @@ public interface TaskCacheFragmentInterface {
             }
         }
     };
+
+    /*package*/ static final class Helper {
+        public static void postPendingResults(List<TaskPendingResult> pendingResults, TaskCacheFragmentInterface cacheFragment) {
+            final TargetMethodFinder targetMethodFinder = new TargetMethodFinder(TaskResult.class);
+
+            for (TaskPendingResult pendingResult : pendingResults) {
+                Pair<Method, Object> target = targetMethodFinder.getMethod(cacheFragment, pendingResult.getResultType(), pendingResult.getTask());
+
+                TaskExecutor taskExecutor = pendingResult.getTaskExecutor();
+                taskExecutor.postResultNow(target, pendingResult.getResult(), pendingResult.getTask());
+            }
+
+            pendingResults.clear();
+        }
+    }
 }

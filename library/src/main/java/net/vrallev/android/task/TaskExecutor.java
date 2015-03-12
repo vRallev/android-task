@@ -3,6 +3,8 @@ package net.vrallev.android.task;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.util.Pair;
@@ -10,6 +12,8 @@ import android.util.SparseArray;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,8 +36,8 @@ public final class TaskExecutor {
             synchronized (TaskExecutor.class) {
                 if (instance == null) {
                     new Builder()
-                        .build()
-                        .asSingleton();
+                            .build()
+                            .asSingleton();
                 }
             }
         }
@@ -59,15 +63,27 @@ public final class TaskExecutor {
         mTargetMethodFinder = new TargetMethodFinder(TaskResult.class);
     }
 
-    public synchronized int execute(Task<?> task, Fragment callback) {
-        return execute(task, callback.getActivity());
+    public synchronized int execute(@NonNull Task<?> task, @NonNull Fragment callback) {
+        return execute(task, callback, null);
     }
 
-    public synchronized int execute(Task<?> task, Activity callback) {
-        return executeInner(task, callback, mCacheFactory.create(callback));
+    public synchronized int execute(@NonNull Task<?> task, @NonNull Fragment callback, @Nullable String annotationId) {
+        return execute(task, callback.getActivity(), annotationId);
     }
 
-    private synchronized int executeInner(Task<?> task, Activity activity, TaskCacheFragmentInterface cacheFragment) {
+    public synchronized int execute(@NonNull Task<?> task, @NonNull Activity callback) {
+        return execute(task, callback, null);
+    }
+
+    public synchronized int execute(@NonNull Task<?> task, @NonNull Activity callback, @Nullable String annotationId) {
+        return executeInner(task, callback, mCacheFactory.create(callback), annotationId);
+    }
+
+    private synchronized int executeInner(Task<?> task, Activity activity, TaskCacheFragmentInterface cacheFragment, String annotationId) {
+        if (isShutdown()) {
+            return -1;
+        }
+
         if (mApplication == null) {
             mApplication = activity.getApplication();
         }
@@ -77,6 +93,7 @@ public final class TaskExecutor {
         task.setKey(key);
         task.setTaskExecutor(this);
         task.setCacheFragment(cacheFragment);
+        task.setAnnotationId(annotationId);
 
         mTasks.put(key, task);
 
@@ -88,8 +105,32 @@ public final class TaskExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    public synchronized <T> T getTask(int key) {
-        return (T) mTasks.get(key);
+    public synchronized Task<?> getTask(int key) {
+        if (mTasks.indexOfKey(key) < 0) {
+            return null;
+        } else {
+            return mTasks.get(key);
+        }
+    }
+
+    public synchronized List<Task<?>> getAllTasks() {
+        List<Task<?>> result = new ArrayList<>();
+        for (int i = 0; i < mTasks.size(); i++) {
+            result.add(mTasks.valueAt(i));
+        }
+        return result;
+    }
+
+    public synchronized <T extends Task<?>> List<T> getAllTasks(Class<T> taskClass) {
+        List<Task<?>> list = getAllTasks();
+        Iterator<Task<?>> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            if (!taskClass.isAssignableFrom(iterator.next().getClass())) {
+                iterator.remove();
+            }
+        }
+        //noinspection unchecked
+        return (List<T>) list;
     }
 
     private synchronized void removeTask(Task<?> task) {
@@ -106,11 +147,9 @@ public final class TaskExecutor {
         return this;
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         mExecutorService.shutdownNow();
         mExecutorService = null;
-        mTasks.clear();
-        mTasks = null;
 
         synchronized (TaskExecutor.class) {
             if (this == instance) {
@@ -119,15 +158,22 @@ public final class TaskExecutor {
         }
     }
 
-    public boolean isShutdown() {
+    public synchronized boolean isShutdown() {
         return mExecutorService == null;
     }
 
-    private void postResultNow(TaskCacheFragmentInterface cacheFragment, Object result, Task<?> task) {
-        mTargetMethodFinder.post(cacheFragment, result, task);
+    /*package*/ void postResultNow(Pair<Method, Object> target, Object result, Task<?> task) {
+        cleanUpTask(task);
+
+        mTargetMethodFinder.invoke(target, result, task);
     }
 
-    private final class TaskRunnable <T> implements Runnable, Application.ActivityLifecycleCallbacks {
+    private void cleanUpTask(Task<?> task) {
+        task.setFinished();
+        removeTask(task);
+    }
+
+    private final class TaskRunnable<T> implements Runnable, Application.ActivityLifecycleCallbacks {
 
         private final Task<T> mTask;
         private final WeakReference<TaskCacheFragmentInterface> mWeakReference;
@@ -149,15 +195,22 @@ public final class TaskExecutor {
         }
 
         private void postResult(final T result, TaskCacheFragmentInterface cacheFragment) {
-            if (TaskExecutor.this.isShutdown()) {
+            if (isShutdown()) {
+                cleanUpTask(mTask);
+                mApplication.unregisterActivityLifecycleCallbacks(this);
                 return;
             }
 
-            removeTask(mTask);
+            final Pair<Method, Object> target = mTargetMethodFinder.getMethod(cacheFragment, mTargetMethodFinder.getResultType(result, mTask), mTask);
+            if (target == null) {
+                cleanUpTask(mTask);
+                mApplication.unregisterActivityLifecycleCallbacks(this);
+                return;
+            }
 
             if (mPostResult.equals(PostResult.IMMEDIATELY)) {
                 mApplication.unregisterActivityLifecycleCallbacks(this);
-                TaskExecutor.this.postResultNow(cacheFragment, result, mTask);
+                postResultNow(target, result, mTask);
                 return;
             }
 
@@ -165,31 +218,28 @@ public final class TaskExecutor {
                 mApplication.unregisterActivityLifecycleCallbacks(this);
 
                 if (mPostResult.equals(PostResult.ON_ANY_THREAD)) {
-                    TaskExecutor.this.postResultNow(cacheFragment, result, mTask);
+                    postResultNow(target, result, mTask);
 
                 } else {
-                    final Pair<Method, Object> target = mTargetMethodFinder.getMethod(cacheFragment, mTargetMethodFinder.getResultType(result, mTask));
-                    if (target != null) {
-                        cacheFragment.getParentActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mTargetMethodFinder.invoke(target, result);
-                            }
-                        });
-                    }
+                    cacheFragment.getParentActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            postResultNow(target, result, mTask);
+                        }
+                    });
                 }
 
             } else {
                 final Class<?> resultType = mTargetMethodFinder.getResultType(result, mTask);
                 if (resultType != null) {
-                    cacheFragment.putPendingResult(new TaskPendingResult(resultType, result));
+                    cacheFragment.putPendingResult(new TaskPendingResult(resultType, result, mTask, TaskExecutor.this));
                 }
             }
         }
 
         @Override
         public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-            if (savedInstanceState == null || !mTask.isFinished()) {
+            if (savedInstanceState == null || mTask.isExecuting()) {
                 return;
             }
 
@@ -206,19 +256,16 @@ public final class TaskExecutor {
             mApplication.unregisterActivityLifecycleCallbacks(this);
 
             TaskCacheFragmentInterface cacheFragment = mCacheFactory.create(activity);
-            List<TaskPendingResult> list = cacheFragment.get(TaskCacheFragmentInterface.PENDING_RESULT_KEY);
-            if (list == null || list.isEmpty()) {
-                try {
-                    postResult(mTask.getResult(), cacheFragment);
-                } catch (InterruptedException e) {
-                    Log.e(TAG, "getResult failed", e);
-                }
+            try {
+                postResult(mTask.getResult(), cacheFragment);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "getResult failed", e);
             }
         }
 
         @Override
         public void onActivityStarted(Activity activity) {
-            if (!mTask.isFinished()) {
+            if (mTask.isExecuting()) {
                 return;
             }
 
@@ -241,7 +288,9 @@ public final class TaskExecutor {
 
         @Override
         public void onActivityStopped(Activity activity) {
-            // do nothing
+            if (activity.isFinishing()) {
+                mApplication.unregisterActivityLifecycleCallbacks(this);
+            }
         }
 
         @Override
@@ -299,7 +348,7 @@ public final class TaskExecutor {
         }
     }
 
-    public static enum PostResult {
+    public enum PostResult {
         IMMEDIATELY,
         ON_ANY_THREAD,
         UI_THREAD
