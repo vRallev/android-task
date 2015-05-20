@@ -90,6 +90,14 @@ public class MainActivity extends Activity {
             case R.id.button_shutdown_executor:
                 testShutdownExecutor();
                 break;
+
+            case R.id.button_list:
+                testArrayListTask();
+                break;
+
+            case R.id.button_double_fragment:
+                testDoubleFragment();
+                break;
         }
     }
 
@@ -112,6 +120,11 @@ public class MainActivity extends Activity {
     @TaskResult(id = ANNOTATION_ID)
     public void onResultWithId(Integer integer, Task<?> task) {
         Toast.makeText(this, "Result with ID " + integer + ", finished = " + task.isFinished(), Toast.LENGTH_SHORT).show();
+    }
+
+    @TaskResult
+    public void onListResult(List<String> list) {
+        Toast.makeText(this, "List length " + (list == null ? null : list.size()), Toast.LENGTH_SHORT).show();
     }
 
     private void testDefaultActivity() {
@@ -152,6 +165,14 @@ public class MainActivity extends Activity {
 
     private void testShutdownExecutor() {
         TaskExecutor.getInstance().shutdown();
+    }
+
+    private void testArrayListTask() {
+        TaskExecutor.getInstance().execute(new ListTask(), this);
+    }
+
+    private void testDoubleFragment() {
+        startActivity(new Intent(this, DoubleFragmentActivity.class));
     }
 
     private void showDialog() {

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.util.Pair;
 import android.util.SparseArray;
@@ -68,7 +69,8 @@ public final class TaskExecutor {
     }
 
     public synchronized int execute(@NonNull Task<?> task, @NonNull Fragment callback, @Nullable String annotationId) {
-        return execute(task, callback.getActivity(), annotationId);
+        FragmentActivity activity = callback.getActivity();
+        return executeInner(task, activity, mCacheFactory.create(activity), annotationId, FragmentIdHelper.getFragmentId(callback));
     }
 
     public synchronized int execute(@NonNull Task<?> task, @NonNull Activity callback) {
@@ -76,10 +78,10 @@ public final class TaskExecutor {
     }
 
     public synchronized int execute(@NonNull Task<?> task, @NonNull Activity callback, @Nullable String annotationId) {
-        return executeInner(task, callback, mCacheFactory.create(callback), annotationId);
+        return executeInner(task, callback, mCacheFactory.create(callback), annotationId, null);
     }
 
-    private synchronized int executeInner(Task<?> task, Activity activity, TaskCacheFragmentInterface cacheFragment, String annotationId) {
+    private synchronized int executeInner(Task<?> task, Activity activity, TaskCacheFragmentInterface cacheFragment, String annotationId, String fragmentId) {
         if (isShutdown()) {
             return -1;
         }
@@ -94,6 +96,7 @@ public final class TaskExecutor {
         task.setTaskExecutor(this);
         task.setCacheFragment(cacheFragment);
         task.setAnnotationId(annotationId);
+        task.setFragmentId(fragmentId);
 
         mTasks.put(key, task);
 
@@ -121,6 +124,7 @@ public final class TaskExecutor {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public synchronized <T extends Task<?>> List<T> getAllTasks(Class<T> taskClass) {
         List<Task<?>> list = getAllTasks();
         Iterator<Task<?>> iterator = list.iterator();
@@ -129,7 +133,6 @@ public final class TaskExecutor {
                 iterator.remove();
             }
         }
-        //noinspection unchecked
         return (List<T>) list;
     }
 

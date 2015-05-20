@@ -16,7 +16,9 @@ import java.util.List;
 /**
  * @author rwondratschek
  */
-/*package*/ class TargetMethodFinder {
+/*package*/
+@SuppressWarnings("unused")
+class TargetMethodFinder {
 
     private static final String TAG = "TargetMethodFinder";
 
@@ -27,15 +29,15 @@ import java.util.List;
     }
 
     public Class<?> getResultType(Object result, Task<?> task) {
-        Class<?> resultType;
-        if (result != null) {
-            resultType = result.getClass();
-        } else {
+        Class<?> resultType = task.getResultClass();
+        if (resultType == null) {
             resultType = findReturnType(task.getClass());
-            if (resultType == null) {
-                Log.w(TAG, "Couldn't find result type");
-                return null;
-            }
+        }
+        if (resultType == null && result != null) {
+            resultType = result.getClass();
+        }
+        if (resultType == null) {
+            Log.w(TAG, "Couldn't find result type");
         }
 
         return resultType;
@@ -50,13 +52,25 @@ import java.util.List;
 
         Pair<Method, Object> pair;
         if (activity instanceof FragmentActivity) {
-            pair = findMethodInActivityAndFragments((FragmentActivity) activity, resultType, mAnnotation, task);
+            pair = findMethodInActivityAndFragments((FragmentActivity) activity, resultType, mAnnotation, task, true);
+            if (pair == null) {
+                pair = findMethodInActivityAndFragments((FragmentActivity) activity, resultType, mAnnotation, task, false);
+            }
+
         } else {
             pair = findMethodInActivity(activity, activity.getClass(), resultType, mAnnotation, task);
         }
 
         if (pair == null) {
-            Log.w(TAG, "Didn't find annotated method with correct result type");
+            Object result;
+            try {
+                result = task.getResult();
+            } catch (InterruptedException ignored) {
+                result = null;
+            }
+
+            Log.w(TAG, String.format("Didn't find method, result type %s, result %s, annotationId %s, fragmentId %s",
+                    resultType, result, task.getAnnotationId(), task.getFragmentId()));
         }
         return pair;
     }
@@ -83,23 +97,29 @@ import java.util.List;
         }
     }
 
+    /*
     public void post(TaskCacheFragmentInterface cacheFragment, Object result, Task<?> task) {
         Pair<Method, Object> target = getMethod(cacheFragment, getResultType(result, task), task);
         if (target != null) {
             invoke(target, result, task);
         }
     }
+    */
 
-    private static Pair<Method, Object> findMethodInActivityAndFragments(FragmentActivity activity, Class<?> resultType, Class<? extends TaskResult> annotation, Task<?> task) {
+    private static Pair<Method, Object> findMethodInActivityAndFragments(FragmentActivity activity, Class<?> resultType,
+                                                                         Class<? extends TaskResult> annotation, Task<?> task, boolean compareFragmentIndex) {
+
         Pair<Method, Object> pair = findMethodInActivity(activity, activity.getClass(), resultType, annotation, task);
         if (pair != null) {
             return pair;
         }
 
-        return findMethodInFragmentManager(activity.getSupportFragmentManager(), resultType, annotation, task);
+        return findMethodInFragmentManager(activity.getSupportFragmentManager(), resultType, annotation, task, compareFragmentIndex);
     }
 
-    private static Pair<Method, Object> findMethodInActivity(Activity activity, Class<?> target, Class<?> resultType, Class<? extends TaskResult> annotation, Task<?> task) {
+    private static Pair<Method, Object> findMethodInActivity(Activity activity, Class<?> target, Class<?> resultType,
+                                                             Class<? extends TaskResult> annotation, Task<?> task) {
+
         if (target.equals(FragmentActivity.class) || target.equals(Activity.class)) {
             return null;
         }
@@ -112,25 +132,34 @@ import java.util.List;
         return findMethodInActivity(activity, target.getSuperclass(), resultType, annotation, task);
     }
 
-    private static Pair<Method, Object> findMethodInFragment(Fragment fragment, Class<?> target, Class<?> resultType, Class<? extends TaskResult> annotation, Task<?> task) {
+    private static Pair<Method, Object> findMethodInFragment(Fragment fragment, Class<?> target, Class<?> resultType,
+                                                             Class<? extends TaskResult> annotation, Task<?> task, boolean compareFragmentIndex) {
+
         if (target.equals(Fragment.class) || target.equals(DialogFragment.class)) {
             return null;
         }
 
-        Method method = findMethodInClass(target, resultType, annotation, task);
-        if (method != null) {
-            return new Pair<>(method, (Object) fragment);
+        final String fragmentId = task.getFragmentId();
+        final boolean useFragmentId = !TextUtils.isEmpty(fragmentId);
+
+        if (!useFragmentId || FragmentIdHelper.equals(fragmentId, FragmentIdHelper.getFragmentId(fragment), compareFragmentIndex)) {
+            Method method = findMethodInClass(target, resultType, annotation, task);
+            if (method != null) {
+                return new Pair<>(method, (Object) fragment);
+            }
+
+            Pair<Method, Object> pair = findMethodInFragment(fragment, target.getSuperclass(), resultType, annotation, task, compareFragmentIndex);
+            if (pair != null) {
+                return pair;
+            }
         }
 
-        Pair<Method, Object> pair = findMethodInFragment(fragment, target.getSuperclass(), resultType, annotation, task);
-        if (pair != null) {
-            return pair;
-        }
-
-        return findMethodInFragmentManager(fragment.getChildFragmentManager(), resultType, annotation, task);
+        return findMethodInFragmentManager(fragment.getChildFragmentManager(), resultType, annotation, task, compareFragmentIndex);
     }
 
-    private static Pair<Method, Object> findMethodInFragmentManager(FragmentManager fragmentManager, Class<?> resultType, Class<? extends TaskResult> annotation, Task<?> task) {
+    private static Pair<Method, Object> findMethodInFragmentManager(FragmentManager fragmentManager, Class<?> resultType,
+                                                                    Class<? extends TaskResult> annotation, Task<?> task, boolean compareFragmentIndex) {
+
         if (fragmentManager == null) {
             return null;
         }
@@ -144,7 +173,7 @@ import java.util.List;
             if (childFragment == null) {
                 continue;
             }
-            Pair<Method, Object> pair = findMethodInFragment(childFragment, childFragment.getClass(), resultType, annotation, task);
+            Pair<Method, Object> pair = findMethodInFragment(childFragment, childFragment.getClass(), resultType, annotation, task, compareFragmentIndex);
             if (pair != null) {
                 return pair;
             }
@@ -154,6 +183,10 @@ import java.util.List;
     }
 
     private static Method findMethodInClass(Class<?> target, Class<?> resultType, Class<? extends TaskResult> annotation, Task<?> task) {
+        if (resultType == null) {
+            return null;
+        }
+
         Method[] declaredMethods;
         try {
             declaredMethods = target.getDeclaredMethods();
@@ -165,35 +198,47 @@ import java.util.List;
         final String annotationId = task.getAnnotationId();
         final boolean useAnnotationId = !TextUtils.isEmpty(annotationId);
 
-        if (declaredMethods != null) {
-            for (Method method : declaredMethods) {
-                if (!method.isAnnotationPresent(annotation)) {
-                    continue;
-                }
-                if (useAnnotationId && !annotationId.equals(method.getAnnotation(annotation).id())) {
-                    continue;
-                }
-                if (!useAnnotationId && !TextUtils.isEmpty(method.getAnnotation(annotation).id())) {
-                    continue;
-                }
-
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                if (parameterTypes.length == 0 || parameterTypes.length > 2) {
-                    continue;
-                }
-                if (!parameterTypes[0].equals(resultType)) {
-                    continue;
-                }
-
-                if (parameterTypes.length == 2 && !parameterTypes[1].isInstance(task)) {
-                    continue;
-                }
-
-                return method;
-            }
+        if (declaredMethods == null) {
+            return null;
         }
 
-        return null;
+        Method candidate = null;
+
+        for (Method method : declaredMethods) {
+            if (!method.isAnnotationPresent(annotation)) {
+                continue;
+            }
+            if (useAnnotationId && !annotationId.equals(method.getAnnotation(annotation).id())) {
+                continue;
+            }
+            if (!useAnnotationId && !TextUtils.isEmpty(method.getAnnotation(annotation).id())) {
+                continue;
+            }
+
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (parameterTypes.length == 0 || parameterTypes.length > 2) {
+                continue;
+            }
+            if (parameterTypes[0].isAssignableFrom(resultType)) {
+                if (candidate == null) {
+                    candidate = method;
+                } else {
+                    Log.w(TAG, "Found another method, which is ignored " + method.getName());
+                }
+            }
+
+            if (!parameterTypes[0].equals(resultType)) {
+                continue;
+            }
+
+            if (parameterTypes.length == 2 && !parameterTypes[1].isInstance(task)) {
+                continue;
+            }
+
+            return method;
+        }
+
+        return candidate;
     }
 
     private static Class<?> findReturnType(Class<?> taskClass) {
@@ -202,8 +247,19 @@ import java.util.List;
         }
 
         for (Method method : taskClass.getDeclaredMethods()) {
-            if ("execute".equals(method.getName()) && method.getParameterTypes() != null && method.getParameterTypes().length == 1) {
-                return method.getReturnType();
+            String name = method.getName();
+            if (!"execute".equals(name)) {
+                continue;
+            }
+
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (parameterTypes == null || parameterTypes.length != 0) {
+                continue;
+            }
+
+            Class<?> returnType = method.getReturnType();
+            if (!Object.class.equals(returnType)) {
+                return returnType;
             }
         }
 

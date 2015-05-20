@@ -9,7 +9,7 @@ android {
         applicationId "net.vrallev.android.task.demo"
 
         minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.compileSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
         versionName project.VERSION_NAME
         versionCode Integer.parseInt(project.VERSION_CODE)

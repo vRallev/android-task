@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply from: '../build-config/gradle-quality.gradle'
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:22.0.0'
+    compile 'com.android.support:appcompat-v7:22.1.1'
 }
 
 android {
@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.compileSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
         versionName project.VERSION_NAME
         versionCode Integer.parseInt(project.VERSION_CODE)

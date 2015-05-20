@@ -21,6 +21,11 @@
             android:name=".FragmentTestActivity"
             android:label="@string/demo"/>
 
+        <activity
+            android:name=".DoubleFragmentActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:label="@string/demo"/>
+
     </application>
 
 </manifest>

@@ -3,8 +3,10 @@ package net.vrallev.android.task;
 import android.app.Activity;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
@@ -25,6 +27,7 @@ public abstract class Task<RESULT> {
     private TaskExecutor mTaskExecutor;
     private WeakReference<TaskCacheFragmentInterface> mCacheFragment;
     private String mAnnotationId;
+    private String mFragmentId;
 
     private RESULT mResult;
 
@@ -50,6 +53,14 @@ public abstract class Task<RESULT> {
 
     /*package*/ final String getAnnotationId() {
         return mAnnotationId;
+    }
+
+    /*package*/ final void setFragmentId(String fragmentId) {
+        mFragmentId = fragmentId;
+    }
+
+    /*package*/ final String getFragmentId() {
+        return mFragmentId;
     }
 
     /*package*/ final RESULT executeInner() {
@@ -87,6 +98,10 @@ public abstract class Task<RESULT> {
         return mFinished;
     }
 
+    protected Class<RESULT> getResultClass() {
+        return null;
+    }
+
     protected final Activity getActivity() {
         TaskCacheFragmentInterface fragment = mCacheFragment.get();
         if (fragment != null) {
@@ -96,6 +111,45 @@ public abstract class Task<RESULT> {
         }
     }
 
+    protected final Fragment getFragment() {
+        if (mFragmentId == null) {
+            return null;
+        }
+        Activity baseActivity = getActivity();
+        if (!(baseActivity instanceof FragmentActivity)) {
+            return null;
+        }
+
+        return findFragment(((FragmentActivity) baseActivity).getSupportFragmentManager());
+    }
+
+    private Fragment findFragment(FragmentManager manager) {
+        List<Fragment> fragments = manager.getFragments();
+        if (fragments == null) {
+            return null;
+        }
+
+        for (Fragment fragment : fragments) {
+            if (fragment == null) {
+                continue;
+            }
+            String fragmentId = FragmentIdHelper.getFragmentId(fragment);
+            if (mFragmentId.equals(fragmentId)) {
+                return fragment;
+            }
+
+            if (fragment.getChildFragmentManager() != null) {
+                Fragment child = findFragment(fragment.getChildFragmentManager());
+                if (child != null) {
+                    return child;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Deprecated
     protected final Fragment findFragmentSupport(String tag) {
         Activity activity = getActivity();
         if (activity instanceof FragmentActivity) {
@@ -105,6 +159,7 @@ public abstract class Task<RESULT> {
         }
     }
 
+    @Deprecated
     protected final Fragment findFragmentSupport(int id) {
         Activity activity = getActivity();
         if (activity instanceof FragmentActivity) {
@@ -114,6 +169,7 @@ public abstract class Task<RESULT> {
         }
     }
 
+    @Deprecated
     protected final android.app.Fragment findFragment(String tag) {
         Activity activity = getActivity();
         if (activity != null) {
@@ -123,6 +179,7 @@ public abstract class Task<RESULT> {
         }
     }
 
+    @Deprecated
     protected final android.app.Fragment findFragment(int id) {
         Activity activity = getActivity();
         if (activity != null) {
