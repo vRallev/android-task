@@ -190,6 +190,12 @@ public final class TaskExecutor {
         public void run() {
             final T result = mTask.executeInner();
 
+            if (mTask instanceof TaskNoCallback) {
+                cleanUpTask(mTask);
+                mApplication.unregisterActivityLifecycleCallbacks(this);
+                return;
+            }
+
             final TaskCacheFragmentInterface cacheFragment = mWeakReference.get();
             if (cacheFragment != null) {
                 postResult(result, cacheFragment);

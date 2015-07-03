@@ -69,7 +69,7 @@ public abstract class Task<RESULT> {
         return mResult;
     }
 
-    /*packacke*/ final void setFinished() {
+    /*package*/ final void setFinished() {
         mFinished = true;
     }
 

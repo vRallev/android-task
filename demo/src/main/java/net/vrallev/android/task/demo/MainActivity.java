@@ -98,6 +98,14 @@ public class MainActivity extends Activity {
             case R.id.button_double_fragment:
                 testDoubleFragment();
                 break;
+
+            case R.id.button_no_callback:
+                testNoCallback();
+                break;
+
+            case R.id.button_crash:
+                testCrashingTask();
+                break;
         }
     }
 
@@ -125,6 +133,11 @@ public class MainActivity extends Activity {
     @TaskResult
     public void onListResult(List<String> list) {
         Toast.makeText(this, "List length " + (list == null ? null : list.size()), Toast.LENGTH_SHORT).show();
+    }
+
+    @TaskResult(id = "crash")
+    public void onCrashResult(Boolean result) {
+
     }
 
     private void testDefaultActivity() {
@@ -173,6 +186,14 @@ public class MainActivity extends Activity {
 
     private void testDoubleFragment() {
         startActivity(new Intent(this, DoubleFragmentActivity.class));
+    }
+
+    private void testNoCallback() {
+        TaskExecutor.getInstance().execute(new SimpleNoCallbackTask(), this);
+    }
+
+    private void testCrashingTask() {
+        TaskExecutor.getInstance().execute(new CrashingTask(), this, "crash");
     }
 
     private void showDialog() {

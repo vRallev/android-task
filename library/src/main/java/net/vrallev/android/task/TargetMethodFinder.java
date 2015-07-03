@@ -5,6 +5,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.util.LruCache;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -22,6 +23,28 @@ class TargetMethodFinder {
 
     private static final String TAG = "TargetMethodFinder";
 
+    private static final LruCache<Class<?>, Class<?>> CACHE_RETURN_TYPE = new LruCache<Class<?>, Class<?>>(15) {
+        @Override
+        protected Class<?> create(Class<?> taskClass) {
+            return findReturnType(taskClass);
+        }
+    };
+
+    private static final LruCache<MethodHolderKey, MethodHolder> CACHE_METHOD = new LruCache<MethodHolderKey, MethodHolder>(25) {
+        @Override
+        protected MethodHolder create(MethodHolderKey key) {
+            return MethodHolder.obtain(findMethodInClass(key));
+        }
+
+        @Override
+        protected void entryRemoved(boolean evicted, MethodHolderKey key, MethodHolder oldValue, MethodHolder newValue) {
+            key.recycle();
+            if (oldValue != null) {
+                oldValue.recycle();
+            }
+        }
+    };
+
     private final Class<? extends TaskResult> mAnnotation;
 
     public TargetMethodFinder(Class<? extends TaskResult> annotation) {
@@ -31,7 +54,7 @@ class TargetMethodFinder {
     public Class<?> getResultType(Object result, Task<?> task) {
         Class<?> resultType = task.getResultClass();
         if (resultType == null) {
-            resultType = findReturnType(task.getClass());
+            resultType = CACHE_RETURN_TYPE.get(task.getClass());
         }
         if (resultType == null && result != null) {
             resultType = result.getClass();
@@ -187,6 +210,19 @@ class TargetMethodFinder {
             return null;
         }
 
+        MethodHolderKey methodHolderKey = MethodHolderKey.obtain(target, resultType, annotation, task);
+        return CACHE_METHOD.get(methodHolderKey).getMethod();
+    }
+
+    private static Method findMethodInClass(MethodHolderKey methodHolderKey) {
+        Class<?> target = methodHolderKey.getTarget();
+        Class<? extends TaskResult> annotation = methodHolderKey.getAnnotation();
+        Class<?> resultType = methodHolderKey.getResultType();
+        Class<? extends Task> taskClass = methodHolderKey.getTaskClass();
+
+        final String annotationId = methodHolderKey.getAnnotationId();
+        final boolean useAnnotationId = !TextUtils.isEmpty(annotationId);
+
         Method[] declaredMethods;
         try {
             declaredMethods = target.getDeclaredMethods();
@@ -194,9 +230,6 @@ class TargetMethodFinder {
             Log.e(TAG, e.getMessage(), e);
             return null;
         }
-
-        final String annotationId = task.getAnnotationId();
-        final boolean useAnnotationId = !TextUtils.isEmpty(annotationId);
 
         if (declaredMethods == null) {
             return null;
@@ -231,7 +264,7 @@ class TargetMethodFinder {
                 continue;
             }
 
-            if (parameterTypes.length == 2 && !parameterTypes[1].isInstance(task)) {
+            if (parameterTypes.length == 2 && !parameterTypes[1].isAssignableFrom(taskClass)) {
                 continue;
             }
 

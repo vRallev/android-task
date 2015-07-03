@@ -10,7 +10,7 @@ Download [the latest version][1] or grab via Gradle:
 
 ```groovy
 dependencies {
-    compile 'net.vrallev.android:android-task:1.0.4'
+    compile 'net.vrallev.android:android-task:1.0.5'
 }
 ```
 
@@ -81,7 +81,7 @@ public void onResult(Integer result, MyTask task) {
 }
 ```
 
-You can annotate the callback method with a concrete ID, if you want to reuse a `Task` but provide different callbacks. **Attention:** If your callback method has an ID, then a `Task` with submitted without an ID won't find this callback method.
+You can annotate the callback method with a concrete ID, if you want to reuse a `Task` but provide different callbacks. **Attention:** If your callback method has an ID, then a `Task` submitted without an ID won't find this callback method.
 
 ```java
 public void startTask() {
@@ -92,6 +92,17 @@ public void startTask() {
 @TaskResult(id = "my_id")
 public void onResult(Integer result, MyTask task) {
 	// handle result, this method gets called on the UI thread and only if the activity is visible
+}
+```
+
+If you want to submit a `Task`, which should not return any result and shouldn't invoke any callback method, then extend `TaskNoCallback`. Compared to a normal `Thread` the purpose of this class is that you still have access to the `Context` and can find the `Task` in the `TaskExecutor`.
+
+```java
+public class SimpleNoCallbackTask extends TaskNoCallback {
+    @Override
+    protected void executeTask() {
+        // do anything
+    }
 }
 ```
 

@@ -1,3 +1,8 @@
+## 1.0.5 (2015-07-03)
+
+- add a task class not invoking any callback
+- performance improvements (caching target methods and return types)
+
 ## 1.0.4 (2015-05-18)
 
 Bugfixes:
