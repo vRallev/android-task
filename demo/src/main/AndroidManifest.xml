@@ -26,6 +26,11 @@
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:label="@string/demo"/>
 
+        <activity
+            android:name=".TransparentActivity"
+            android:theme="@style/AppTheme.Trans"
+            android:label="@string/demo"/>
+
     </application>
 
 </manifest>

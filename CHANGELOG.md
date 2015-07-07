@@ -1,3 +1,9 @@
+## 1.0.6 (2015-07-07)
+
+Bugfixes:
+
+  - After opening a translucent activity the CacheFragment returns a wrong visibility state
+
 ## 1.0.5 (2015-07-03)
 
 - add a task class not invoking any callback

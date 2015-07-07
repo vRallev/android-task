@@ -4,4 +4,9 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="AppTheme.Trans" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
 </resources>

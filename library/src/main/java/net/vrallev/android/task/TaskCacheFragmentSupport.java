@@ -35,6 +35,8 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
             fragmentManager.beginTransaction()
                 .add(result, TAG)
                 .commitAllowingStateLoss();
+
+            fragmentManager.executePendingTransactions();
         }
 
         return result;
@@ -72,6 +74,12 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
         if (list != null && !list.isEmpty()) {
             TaskCacheFragmentInterface.Helper.postPendingResults(list, this);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mCanSaveInstanceState = true;
     }
 
     @Override
