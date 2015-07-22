@@ -12,6 +12,7 @@ import java.util.Random;
 public class SimpleTask extends Task<Boolean> {
 
     private static final long SLEEP_TIME = 5_000L;
+    private static final Random RANDOM = new Random();
 
     private ProgressCallback mProgressCallback;
 
@@ -35,7 +36,7 @@ public class SimpleTask extends Task<Boolean> {
         }
 
         if (isCancelled()) {
-            return new Random().nextBoolean() ? false : null;
+            return RANDOM.nextBoolean() ? false : null;
         } else {
             return true;
         }

@@ -3,7 +3,9 @@ package net.vrallev.android.task;
 import android.app.Activity;
 import android.support.v4.app.FragmentActivity;
 import android.util.Pair;
+import android.util.SparseArray;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -43,6 +45,9 @@ public interface TaskCacheFragmentInterface {
     };
 
     /*package*/ static final class Helper {
+
+        private static final SparseArray<WeakReference<TaskCacheFragmentInterface>> TEMP_FRAG_CACHE = new SparseArray<>();
+
         public static void postPendingResults(List<TaskPendingResult> pendingResults, TaskCacheFragmentInterface cacheFragment) {
             final TargetMethodFinder targetMethodFinder = new TargetMethodFinder(TaskResult.class);
 
@@ -54,6 +59,15 @@ public interface TaskCacheFragmentInterface {
             }
 
             pendingResults.clear();
+        }
+
+        public static void putTempCacheFragment(Activity activity, TaskCacheFragmentInterface cacheFragment) {
+            TEMP_FRAG_CACHE.put(activity.hashCode(), new WeakReference<>(cacheFragment));
+        }
+
+        public static TaskCacheFragmentInterface getTempCacheFragment(Activity activity) {
+            WeakReference<TaskCacheFragmentInterface> weakReference = TEMP_FRAG_CACHE.get(activity.hashCode());
+            return weakReference == null ? null : weakReference.get();
         }
     }
 }

@@ -20,22 +20,31 @@ public final class TaskCacheFragment extends Fragment implements TaskCacheFragme
 
     private static final String TAG = "TaskCacheFragment";
 
-    /*package*/ static TaskCacheFragment getFrom(Activity activity) {
-        TaskCacheFragment result;
-
+    /*package*/
+    static TaskCacheFragment getFrom(Activity activity) {
         FragmentManager fragmentManager = activity.getFragmentManager();
 
         Fragment fragment = fragmentManager.findFragmentByTag(TAG);
         if (fragment instanceof TaskCacheFragment) {
-            result = (TaskCacheFragment) fragment;
-        } else {
-            result = new TaskCacheFragment();
-            result.mActivity = activity;
-            fragmentManager.beginTransaction()
+            return (TaskCacheFragment) fragment;
+        }
+
+        TaskCacheFragmentInterface cacheFragment = Helper.getTempCacheFragment(activity);
+        if (cacheFragment instanceof TaskCacheFragment) {
+            return (TaskCacheFragment) cacheFragment;
+        }
+
+        TaskCacheFragment result = new TaskCacheFragment();
+        result.mActivity = activity;
+        fragmentManager.beginTransaction()
                 .add(result, TAG)
                 .commitAllowingStateLoss();
 
+        try {
             fragmentManager.executePendingTransactions();
+        } catch (IllegalStateException ignored) {
+            // may throw java.lang.IllegalStateException: Recursive entry to executePendingTransactions
+            TaskCacheFragmentInterface.Helper.putTempCacheFragment(activity, result);
         }
 
         return result;

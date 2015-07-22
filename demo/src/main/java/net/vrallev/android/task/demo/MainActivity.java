@@ -110,6 +110,10 @@ public class MainActivity extends Activity {
             case R.id.button_open_transparent_activity:
                 startActivity(new Intent(this, TransparentActivity.class));
                 break;
+
+            case R.id.button_open_view_pager_activity:
+                startActivity(new Intent(this, ViewPagerActivity.class));
+                break;
         }
     }
 

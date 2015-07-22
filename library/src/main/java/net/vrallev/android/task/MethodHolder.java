@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 /**
  * @author rwondratschek
  */
-/*package*/ class MethodHolder {
+/*package*/ final class MethodHolder {
 
     private static final Pools.SynchronizedPool<MethodHolder> POOL = new Pools.SynchronizedPool<>(20);
 

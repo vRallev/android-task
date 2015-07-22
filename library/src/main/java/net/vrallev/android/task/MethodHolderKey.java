@@ -2,12 +2,10 @@ package net.vrallev.android.task;
 
 import android.support.v4.util.Pools;
 
-import java.lang.reflect.Method;
-
 /**
  * @author rwondratschek
  */
-/*package*/ class MethodHolderKey {
+/*package*/ final class MethodHolderKey {
 
     private static final Pools.SynchronizedPool<MethodHolderKey> POOL = new Pools.SynchronizedPool<>(20);
 
@@ -91,13 +89,5 @@ import java.lang.reflect.Method;
         result = 31 * result + (mAnnotationId != null ? mAnnotationId.hashCode() : 0);
         result = 31 * result + (mTaskClass != null ? mTaskClass.hashCode() : 0);
         return result;
-    }
-
-    private static class MethodHolder {
-        private final Method mMethod;
-
-        private MethodHolder(Method method) {
-            mMethod = method;
-        }
     }
 }

@@ -1,3 +1,10 @@
+## 1.0.7 (2015-07-22)
+
+Bugfixes:
+
+  - Catch IllegalStateException thrown while attaching the CacheFragment during a fragment transaction
+    (e.g. start a Task in onCreateView() of a Fragment in a ViewPager)
+
 ## 1.0.6 (2015-07-07)
 
 Bugfixes:
