@@ -7,6 +7,8 @@ import android.util.SparseArray;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,8 +26,6 @@ public interface TaskCacheFragmentInterface {
     public <T> T put(String key, Object value);
 
     public <T> T remove(String key);
-
-    public void putPendingResult(TaskPendingResult pendingResult);
 
     public Activity getParentActivity();
 
@@ -48,7 +48,12 @@ public interface TaskCacheFragmentInterface {
 
         private static final SparseArray<WeakReference<TaskCacheFragmentInterface>> TEMP_FRAG_CACHE = new SparseArray<>();
 
-        public static void postPendingResults(List<TaskPendingResult> pendingResults, TaskCacheFragmentInterface cacheFragment) {
+        public static synchronized void postPendingResults(TaskCacheFragmentInterface cacheFragment) {
+            List<TaskPendingResult> pendingResults = cacheFragment.get(PENDING_RESULT_KEY);
+            if (pendingResults == null || pendingResults.isEmpty()) {
+                return;
+            }
+
             final TargetMethodFinder targetMethodFinder = new TargetMethodFinder(TaskResult.class);
 
             for (TaskPendingResult pendingResult : pendingResults) {
@@ -59,6 +64,16 @@ public interface TaskCacheFragmentInterface {
             }
 
             pendingResults.clear();
+        }
+
+        public static synchronized void putPendingResult(TaskCacheFragmentInterface cacheFragment, TaskPendingResult pendingResult) {
+            List<TaskPendingResult> list = cacheFragment.get(PENDING_RESULT_KEY);
+            if (list == null) {
+                list = Collections.synchronizedList(new ArrayList<TaskPendingResult>());
+                cacheFragment.put(PENDING_RESULT_KEY, list);
+            }
+
+            list.add(pendingResult);
         }
 
         public static void putTempCacheFragment(Activity activity, TaskCacheFragmentInterface cacheFragment) {

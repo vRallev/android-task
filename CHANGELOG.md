@@ -1,3 +1,9 @@
+## 1.0.8 (2015-09-15)
+
+Bugfixes:
+
+  - Deliver pending results in onResume() as well 
+
 ## 1.0.7 (2015-07-22)
 
 Bugfixes:

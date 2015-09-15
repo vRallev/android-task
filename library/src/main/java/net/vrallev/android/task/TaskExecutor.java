@@ -203,7 +203,7 @@ public final class TaskExecutor {
             // else wait for onCreate of activity
         }
 
-        private void postResult(final T result, TaskCacheFragmentInterface cacheFragment) {
+        private void postResult(final T result, final TaskCacheFragmentInterface cacheFragment) {
             if (isShutdown()) {
                 cleanUpTask(mTask);
                 mApplication.unregisterActivityLifecycleCallbacks(this);
@@ -241,7 +241,22 @@ public final class TaskExecutor {
             } else {
                 final Class<?> resultType = mTargetMethodFinder.getResultType(result, mTask);
                 if (resultType != null) {
-                    cacheFragment.putPendingResult(new TaskPendingResult(resultType, result, mTask, TaskExecutor.this));
+                    TaskCacheFragmentInterface.Helper.putPendingResult(cacheFragment, new TaskPendingResult(resultType, result, mTask, TaskExecutor.this));
+
+                    // race condition
+                    if (cacheFragment.canSaveInstanceState()) {
+                        if (mPostResult == PostResult.ON_ANY_THREAD) {
+                            TaskCacheFragmentInterface.Helper.postPendingResults(cacheFragment);
+                        } else {
+                            cacheFragment.getParentActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    TaskCacheFragmentInterface.Helper.postPendingResults(cacheFragment);
+                                }
+                            });
+                        }
+                    }
+
                 }
             }
         }

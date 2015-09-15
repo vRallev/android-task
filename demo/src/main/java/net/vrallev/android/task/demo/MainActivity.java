@@ -26,8 +26,10 @@ public class MainActivity extends Activity {
     private static final String ANNOTATION_ID = "annotationId";
 
     private static final String TASK_ID_KEY = "TASK_ID_KEY";
+    private static final String TASK_ID_PERMISSION_KEY = "TASK_ID_PERMISSION_KEY";
 
     private int mTaskId;
+    private int mTaskIdPermission;
     private ProgressDialog mProgressDialog;
 
     @Override
@@ -37,8 +39,10 @@ public class MainActivity extends Activity {
 
         if (savedInstanceState != null) {
             mTaskId = savedInstanceState.getInt(TASK_ID_KEY, -1);
+            mTaskIdPermission = savedInstanceState.getInt(TASK_ID_PERMISSION_KEY, -1);
         } else {
             mTaskId = -1;
+            mTaskIdPermission = -1;
         }
     }
 
@@ -63,6 +67,19 @@ public class MainActivity extends Activity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(TASK_ID_KEY, mTaskId);
+        outState.putInt(TASK_ID_PERMISSION_KEY, mTaskIdPermission);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (mTaskIdPermission > 0) {
+            PermissionTask task = (PermissionTask) TaskExecutor.getInstance().getTask(mTaskIdPermission);
+            if (task != null) {
+                task.onRequestPermissionResult(requestCode, permissions, grantResults);
+            }
+        }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     public void onClick(View view) {
@@ -114,6 +131,10 @@ public class MainActivity extends Activity {
             case R.id.button_open_view_pager_activity:
                 startActivity(new Intent(this, ViewPagerActivity.class));
                 break;
+
+            case R.id.button_permission:
+                testPermissionTask();
+                break;
         }
     }
 
@@ -146,6 +167,11 @@ public class MainActivity extends Activity {
     @TaskResult(id = "crash")
     public void onCrashResult(Boolean result) {
 
+    }
+
+    @TaskResult(id = "permission")
+    public void onPermissionResult(Boolean result) {
+        Toast.makeText(this, "Permission " + result, Toast.LENGTH_SHORT).show();
     }
 
     private void testDefaultActivity() {
@@ -202,6 +228,10 @@ public class MainActivity extends Activity {
 
     private void testCrashingTask() {
         TaskExecutor.getInstance().execute(new CrashingTask(), this, "crash");
+    }
+
+    private void testPermissionTask() {
+        mTaskIdPermission = TaskExecutor.getInstance().execute(new PermissionTask(), this, "permission");
     }
 
     private void showDialog() {

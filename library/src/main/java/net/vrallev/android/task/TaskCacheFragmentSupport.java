@@ -7,10 +7,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,7 +50,7 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
     }
 
     private final Map<String, Object> mCache;
-    private boolean mCanSaveInstanceState;
+    private volatile boolean mCanSaveInstanceState;
     private Activity mActivity;
 
     public TaskCacheFragmentSupport() {
@@ -76,19 +74,15 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
     @Override
     public void onStart() {
         super.onStart();
-
         mCanSaveInstanceState = true;
-
-        List<TaskPendingResult> list = get(PENDING_RESULT_KEY);
-        if (list != null && !list.isEmpty()) {
-            TaskCacheFragmentInterface.Helper.postPendingResults(list, this);
-        }
+        TaskCacheFragmentInterface.Helper.postPendingResults(this);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         mCanSaveInstanceState = true;
+        TaskCacheFragmentInterface.Helper.postPendingResults(this);
     }
 
     @Override
@@ -132,17 +126,6 @@ public final class TaskCacheFragmentSupport extends Fragment implements TaskCach
     @Override
     public synchronized <T> T remove(String key) {
         return (T) mCache.remove(key);
-    }
-
-    @Override
-    public synchronized void putPendingResult(TaskPendingResult pendingResult) {
-        List<TaskPendingResult> list = get(PENDING_RESULT_KEY);
-        if (list == null) {
-            list = Collections.synchronizedList(new ArrayList<TaskPendingResult>());
-            put(PENDING_RESULT_KEY, list);
-        }
-
-        list.add(pendingResult);
     }
 
     @Override
