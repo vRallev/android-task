@@ -125,6 +125,7 @@ public class MainActivity extends Activity {
                 break;
 
             case R.id.button_open_transparent_activity:
+                testIntegerTask();
                 startActivity(new Intent(this, TransparentActivity.class));
                 break;
 
@@ -134,6 +135,10 @@ public class MainActivity extends Activity {
 
             case R.id.button_permission:
                 testPermissionTask();
+                break;
+
+            case R.id.button_explain:
+                testExplain();
                 break;
         }
     }
@@ -172,6 +177,11 @@ public class MainActivity extends Activity {
     @TaskResult(id = "permission")
     public void onPermissionResult(Boolean result) {
         Toast.makeText(this, "Permission " + result, Toast.LENGTH_SHORT).show();
+    }
+
+    @TaskResult(id = "explain")
+    public void onExplainResult(Boolean result) {
+        Toast.makeText(this, "Explain " + result, Toast.LENGTH_SHORT).show();
     }
 
     private void testDefaultActivity() {
@@ -232,6 +242,10 @@ public class MainActivity extends Activity {
 
     private void testPermissionTask() {
         mTaskIdPermission = TaskExecutor.getInstance().execute(new PermissionTask(), this, "permission");
+    }
+
+    private void testExplain() {
+        TaskExecutor.getInstance().execute(new ExplainActivity.ExplainTask(), this, "explain");
     }
 
     private void showDialog() {
