@@ -66,8 +66,7 @@ class TargetMethodFinder {
         return resultType;
     }
 
-    public Pair<Method, Object> getMethod(TaskCacheFragmentInterface cacheFragment, Class<?> resultType, Task<?> task) {
-        Activity activity = cacheFragment.getParentActivity();
+    public Pair<Method, Object> getMethod(Activity activity, Class<?> resultType, Task<?> task) {
         if (activity == null) {
             Log.w(TAG, "Activity is null, can't find target");
             return null;
@@ -85,13 +84,7 @@ class TargetMethodFinder {
         }
 
         if (pair == null) {
-            Object result;
-            try {
-                result = task.getResult();
-            } catch (InterruptedException ignored) {
-                result = null;
-            }
-
+            Object result = task.getResult();
             Log.w(TAG, String.format("Didn't find method, result type %s, result %s, annotationId %s, fragmentId %s",
                     resultType, result, task.getAnnotationId(), task.getFragmentId()));
         }

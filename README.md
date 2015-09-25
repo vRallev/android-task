@@ -10,7 +10,7 @@ Download [the latest version][1] or grab via Gradle:
 
 ```groovy
 dependencies {
-    compile 'net.vrallev.android:android-task:1.0.8'
+    compile 'net.vrallev.android:android-task:1.1.0'
 }
 ```
 
@@ -109,7 +109,7 @@ public class SimpleNoCallbackTask extends TaskNoCallback {
 How it works
 ------------
 
-When you submit a task, a `Fragment` gets attached to the `Activity`. The `Fragment` instance is retained and caches information and results. When a `Task` finished, the `TaskExecutor` searches the callback method and invokes it on the visible `Activity` or `Fragment`. 
+The `TaskExecutor` monitors the state of the `Activity`. When a `Task` finished, the `TaskExecutor` searches the callback method and invokes it on the visible `Activity` or `Fragment`. 
 
 UI components are only referenced with a `WeakReference` to avoid memory leaks. If a callback method can't be found or the `Activity` was already cleared, then the result from the `Task` is dropped.
 

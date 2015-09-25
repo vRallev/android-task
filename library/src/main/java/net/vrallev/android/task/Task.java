@@ -1,9 +1,12 @@
 package net.vrallev.android.task;
 
 import android.app.Activity;
+import android.app.Application;
+import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.util.Log;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -18,6 +21,7 @@ public abstract class Task<RESULT> {
 
     protected abstract RESULT execute();
 
+    private final Object mMonitor;
     private final CountDownLatch mCountDownLatch;
 
     private volatile boolean mCancelled;
@@ -25,7 +29,8 @@ public abstract class Task<RESULT> {
 
     private int mKey = -1;
     private TaskExecutor mTaskExecutor;
-    private WeakReference<TaskCacheFragmentInterface> mCacheFragment;
+    private Application mApplication;
+    private WeakReference<Activity> mCachedActivity;
     private String mAnnotationId;
     private String mFragmentId;
 
@@ -33,34 +38,52 @@ public abstract class Task<RESULT> {
 
     public Task() {
         mCountDownLatch = new CountDownLatch(1);
+        mMonitor = new Object();
     }
 
     /*package*/ final void setKey(int key) {
-        mKey = key;
+        synchronized (mMonitor) {
+            mKey = key;
+        }
     }
 
     /*package*/ final void setTaskExecutor(TaskExecutor taskExecutor) {
-        mTaskExecutor = taskExecutor;
+        synchronized (mMonitor) {
+            mTaskExecutor = taskExecutor;
+        }
     }
 
-    /*package*/ final void setCacheFragment(TaskCacheFragmentInterface cacheFragment) {
-        mCacheFragment = new WeakReference<>(cacheFragment);
+    /*package*/ final void setCachedActivity(Activity activity) {
+        synchronized (mMonitor) {
+            if (mApplication == null) {
+                mApplication = activity.getApplication();
+            }
+            mCachedActivity = new WeakReference<>(activity);
+        }
     }
 
     /*package*/ final void setAnnotationId(String annotationId) {
-        mAnnotationId = annotationId;
+        synchronized (mMonitor) {
+            mAnnotationId = annotationId;
+        }
     }
 
     /*package*/ final String getAnnotationId() {
-        return mAnnotationId;
+        synchronized (mMonitor) {
+            return mAnnotationId;
+        }
     }
 
     /*package*/ final void setFragmentId(String fragmentId) {
-        mFragmentId = fragmentId;
+        synchronized (mMonitor) {
+            mFragmentId = fragmentId;
+        }
     }
 
     /*package*/ final String getFragmentId() {
-        return mFragmentId;
+        synchronized (mMonitor) {
+            return mFragmentId;
+        }
     }
 
     /*package*/ final RESULT executeInner() {
@@ -74,7 +97,9 @@ public abstract class Task<RESULT> {
     }
 
     public final int getKey() {
-        return mKey;
+        synchronized (mMonitor) {
+            return mKey;
+        }
     }
 
     public final void cancel() {
@@ -85,8 +110,12 @@ public abstract class Task<RESULT> {
         return mCancelled || Thread.currentThread().isInterrupted();
     }
 
-    public RESULT getResult() throws InterruptedException {
-        mCountDownLatch.await();
+    public RESULT getResult() {
+        try {
+            mCountDownLatch.await();
+        } catch (InterruptedException e) {
+            Log.e("Task", "Interruption while waiting for result", e);
+        }
         return mResult;
     }
 
@@ -103,12 +132,11 @@ public abstract class Task<RESULT> {
     }
 
     protected final Activity getActivity() {
-        TaskCacheFragmentInterface fragment = mCacheFragment.get();
-        if (fragment != null) {
-            return fragment.getParentActivity();
-        } else {
-            return null;
-        }
+        return mCachedActivity.get();
+    }
+
+    protected final Context getApplicationContext() {
+        return mApplication;
     }
 
     protected final Fragment getFragment() {
@@ -147,46 +175,6 @@ public abstract class Task<RESULT> {
         }
 
         return null;
-    }
-
-    @Deprecated
-    protected final Fragment findFragmentSupport(String tag) {
-        Activity activity = getActivity();
-        if (activity instanceof FragmentActivity) {
-            return ((FragmentActivity) activity).getSupportFragmentManager().findFragmentByTag(tag);
-        } else {
-            return null;
-        }
-    }
-
-    @Deprecated
-    protected final Fragment findFragmentSupport(int id) {
-        Activity activity = getActivity();
-        if (activity instanceof FragmentActivity) {
-            return ((FragmentActivity) activity).getSupportFragmentManager().findFragmentById(id);
-        } else {
-            return null;
-        }
-    }
-
-    @Deprecated
-    protected final android.app.Fragment findFragment(String tag) {
-        Activity activity = getActivity();
-        if (activity != null) {
-            return activity.getFragmentManager().findFragmentByTag(tag);
-        } else {
-            return null;
-        }
-    }
-
-    @Deprecated
-    protected final android.app.Fragment findFragment(int id) {
-        Activity activity = getActivity();
-        if (activity != null) {
-            return activity.getFragmentManager().findFragmentById(id);
-        } else {
-            return null;
-        }
     }
 
     @Override

@@ -41,6 +41,11 @@
             android:label="@string/demo"
             android:theme="@style/AppTheme"/>
 
+        <activity
+            android:name=".ExplainActivity"
+            android:label="@string/demo"
+            android:theme="@style/AppTheme"/>
+
     </application>
 
 </manifest>

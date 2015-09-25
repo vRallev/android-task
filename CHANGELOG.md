@@ -1,3 +1,9 @@
+## 1.1.0 (2015-09-25)
+
+- Major refactoring to handle activity state easier (remove fragments)
+- Fix bug where callback never was invoked if the activity was recreated, but the old was still cached
+- Remove deprecated methods  
+
 ## 1.0.8 (2015-09-15)
 
 Bugfixes:
