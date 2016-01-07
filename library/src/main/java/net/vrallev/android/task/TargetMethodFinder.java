@@ -23,14 +23,14 @@ class TargetMethodFinder {
 
     private static final String TAG = "TargetMethodFinder";
 
-    private static final LruCache<Class<?>, Class<?>> CACHE_RETURN_TYPE = new LruCache<Class<?>, Class<?>>(15) {
+    private static final LruCache<Class<?>, Class<?>> CACHE_RETURN_TYPE = new LruCache<Class<?>, Class<?>>(35) {
         @Override
         protected Class<?> create(Class<?> taskClass) {
             return findReturnType(taskClass);
         }
     };
 
-    private static final LruCache<MethodHolderKey, MethodHolder> CACHE_METHOD = new LruCache<MethodHolderKey, MethodHolder>(25) {
+    private static final LruCache<MethodHolderKey, MethodHolder> CACHE_METHOD = new LruCache<MethodHolderKey, MethodHolder>(35) {
         @Override
         protected MethodHolder create(MethodHolderKey key) {
             return MethodHolder.obtain(findMethodInClass(key));

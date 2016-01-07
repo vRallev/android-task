@@ -1,3 +1,7 @@
+## 1.1.1 (2016-01-07)
+
+- Catch crash while recycling some cached objects
+
 ## 1.1.0 (2015-09-25)
 
 - Major refactoring to handle activity state easier (remove fragments)

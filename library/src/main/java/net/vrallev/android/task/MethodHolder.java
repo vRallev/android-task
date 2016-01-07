@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
  */
 /*package*/ final class MethodHolder {
 
-    private static final Pools.SynchronizedPool<MethodHolder> POOL = new Pools.SynchronizedPool<>(20);
+    private static final Pools.SynchronizedPool<MethodHolder> POOL = new Pools.SynchronizedPool<>(30);
 
     private static final MethodHolder NULL_METHOD_HOLDER = new MethodHolder();
 
@@ -41,7 +41,11 @@ import java.lang.reflect.Method;
     }
 
     public void recycle() {
-        POOL.release(this);
+        try {
+            POOL.release(this);
+        } catch (Exception e) {
+            // seeing "IllegalStateException: Already in the pool!" from time to time, then don't recycle this instance
+        }
     }
 
     @Override

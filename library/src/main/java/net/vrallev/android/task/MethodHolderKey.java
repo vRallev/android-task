@@ -39,7 +39,11 @@ import android.support.v4.util.Pools;
     }
 
     public void recycle() {
-        POOL.release(this);
+        try {
+            POOL.release(this);
+        } catch (Exception e) {
+            // seeing "IllegalStateException: Already in the pool!" from time to time, then don't recycle this instance
+        }
     }
 
     public Class<?> getTarget() {
