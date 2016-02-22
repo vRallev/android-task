@@ -1,3 +1,7 @@
+## 1.1.2 (2016-02-22)
+
+- Bugfix
+
 ## 1.1.1 (2016-01-07)
 
 - Catch crash while recycling some cached objects

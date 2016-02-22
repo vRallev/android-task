@@ -1,6 +1,7 @@
 package net.vrallev.android.task;
 
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 
 import java.util.List;
 
@@ -54,12 +55,15 @@ import java.util.List;
             index = "";
         }
 
-        List<Fragment> fragments = fragment.getFragmentManager().getFragments();
-        if (fragments != null) {
-            for (int i = 0; i < fragments.size(); i++) {
-                if (fragment.equals(fragments.get(i))) {
-                    index += i;
-                    break;
+        FragmentManager fragmentManager = fragment.getFragmentManager();
+        if (fragmentManager != null) {
+            List<Fragment> fragments = fragmentManager.getFragments();
+            if (fragments != null && !fragments.isEmpty()) {
+                for (int i = 0; i < fragments.size(); i++) {
+                    if (fragment.equals(fragments.get(i))) {
+                        index += i;
+                        break;
+                    }
                 }
             }
         }
