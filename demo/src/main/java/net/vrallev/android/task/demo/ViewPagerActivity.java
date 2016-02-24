@@ -53,7 +53,8 @@ public class ViewPagerActivity extends FragmentActivity {
     public static class MyFragment extends Fragment {
 
         private static final String KEY_POSITION = "KEY_POSITION";
-
+        private int mPosition;
+        
         public static MyFragment create(int position) {
             Bundle args = new Bundle();
             args.putInt(KEY_POSITION, position);
@@ -61,8 +62,6 @@ public class ViewPagerActivity extends FragmentActivity {
             fragment.setArguments(args);
             return fragment;
         }
-
-        private int mPosition;
 
         @Nullable
         @Override

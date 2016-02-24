@@ -19,8 +19,6 @@ import java.util.concurrent.CountDownLatch;
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 public abstract class Task<RESULT> {
 
-    protected abstract RESULT execute();
-
     private final Object mMonitor;
     private final CountDownLatch mCountDownLatch;
 
@@ -40,6 +38,8 @@ public abstract class Task<RESULT> {
         mCountDownLatch = new CountDownLatch(1);
         mMonitor = new Object();
     }
+    
+    protected abstract RESULT execute();
 
     /*package*/ final void setKey(int key) {
         synchronized (mMonitor) {
