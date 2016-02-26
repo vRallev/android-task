@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Pair;
 import android.util.SparseArray;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -49,8 +50,9 @@ public final class TaskExecutor {
     private ExecutorService mExecutorService;
     private final PostResult mPostResult;
 
-    private SparseArray<Task<?>> mTasks;
-    private TargetMethodFinder mTargetMethodFinder;
+    private final SparseArray<Task<?>> mTasks;
+    private final SparseArray<WeakReference<TaskRunnable<?>>> mTaskRunnables;
+    private final TargetMethodFinder mTargetMethodFinder;
 
     private Application mApplication;
 
@@ -59,6 +61,7 @@ public final class TaskExecutor {
         mPostResult = postResult;
 
         mTasks = new SparseArray<>();
+        mTaskRunnables = new SparseArray<>();
         mTargetMethodFinder = new TargetMethodFinder(TaskResult.class);
     }
 
@@ -99,6 +102,9 @@ public final class TaskExecutor {
         mTasks.put(key, task);
 
         TaskRunnable<?> taskRunnable = new TaskRunnable<>(task, activity);
+
+        mTaskRunnables.put(key, new WeakReference<TaskRunnable<?>>(taskRunnable));
+
         mApplication.registerActivityLifecycleCallbacks(taskRunnable);
         mExecutorService.execute(taskRunnable);
 
@@ -139,6 +145,9 @@ public final class TaskExecutor {
         if (index >= 0) {
             mTasks.removeAt(index);
         }
+
+        int key = task.getKey();
+        mTaskRunnables.remove(key);
     }
 
     public TaskExecutor asSingleton() {
@@ -169,6 +178,38 @@ public final class TaskExecutor {
         mTargetMethodFinder.invoke(target, result, taskRunnable.mTask);
     }
 
+    /*package*/ boolean updateCallback(Task<?> task, Fragment callback) {
+        if (callback == null) {
+            return false;
+        }
+
+        if (updateCallback(task, callback.getActivity())) {
+            task.setFragmentId(FragmentIdHelper.getFragmentId(callback));
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /*package*/ boolean updateCallback(Task<?> task, Activity callback) {
+        if (task == null || callback == null) {
+            return false;
+        }
+
+        WeakReference<TaskRunnable<?>> reference = mTaskRunnables.get(task.getKey());
+        if (reference == null) {
+            return false;
+        }
+        TaskRunnable<?> runnable = reference.get();
+        if (runnable == null || runnable.mPostingResult || runnable.mTask != task) {
+            return false;
+        }
+
+        task.setCachedActivity(callback);
+        runnable.updateCallbackActivity(callback);
+        return true;
+    }
+
     private void cleanUpTask(TaskRunnable<?> taskRunnable) {
         if (taskRunnable.mTask.isExecuting() && !taskRunnable.mTask.isCancelled()) {
             taskRunnable.mTask.cancel();
@@ -190,8 +231,7 @@ public final class TaskExecutor {
 
         private TaskRunnable(Task<T> task, Activity activity) {
             mTask = task;
-            mActivityHash = activity.hashCode();
-            mCanSaveInstanceState = getInitialSaveInstanceState(activity);
+            updateCallbackActivity(activity);
         }
 
         @Override
@@ -328,6 +368,11 @@ public final class TaskExecutor {
         @Override
         public void onActivityDestroyed(Activity activity) {
             // do nothing
+        }
+
+        private void updateCallbackActivity(Activity activity) {
+            mActivityHash = activity.hashCode();
+            mCanSaveInstanceState = getInitialSaveInstanceState(activity);
         }
 
         private boolean isCallbackActivity(Activity activity) {

@@ -140,6 +140,10 @@ public class MainActivity extends Activity {
             case R.id.button_explain:
                 testExplain();
                 break;
+
+            case R.id.button_replace_callback:
+                testReplaceCallback();
+                break;
         }
     }
 
@@ -246,6 +250,14 @@ public class MainActivity extends Activity {
 
     private void testExplain() {
         TaskExecutor.getInstance().execute(new ExplainActivity.ExplainTask(), this, "explain");
+    }
+
+    private void testReplaceCallback() {
+        for (int i = 0; i < 3; i++) {
+            new IntegerTask().start(this);
+        }
+
+        startActivity(new Intent(this, ReplaceCallbackActivity.class));
     }
 
     private void showDialog() {

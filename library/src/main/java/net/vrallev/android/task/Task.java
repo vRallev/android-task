@@ -19,8 +19,6 @@ import java.util.concurrent.CountDownLatch;
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 public abstract class Task<RESULT> {
 
-    protected abstract RESULT execute();
-
     private final Object mMonitor;
     private final CountDownLatch mCountDownLatch;
 
@@ -40,6 +38,8 @@ public abstract class Task<RESULT> {
         mCountDownLatch = new CountDownLatch(1);
         mMonitor = new Object();
     }
+
+    protected abstract RESULT execute();
 
     /*package*/ final void setKey(int key) {
         synchronized (mMonitor) {
@@ -87,7 +87,11 @@ public abstract class Task<RESULT> {
     }
 
     /*package*/ final RESULT executeInner() {
-        mResult = execute();
+        try {
+            mResult = execute();
+        } catch (Throwable t) {
+            Log.e("Task", getClass().getName() + " crashed", t);
+        }
         mCountDownLatch.countDown();
         return mResult;
     }
@@ -125,6 +129,30 @@ public abstract class Task<RESULT> {
 
     public final boolean isFinished() {
         return mFinished;
+    }
+
+    public final int start(Fragment callback) {
+        return TaskExecutor.getInstance().execute(this, callback);
+    }
+
+    public final int start(Fragment callback, String annotationId) {
+        return TaskExecutor.getInstance().execute(this, callback, annotationId);
+    }
+
+    public final int start(Activity callback) {
+        return TaskExecutor.getInstance().execute(this, callback);
+    }
+
+    public final int start(Activity callback, String annotationId) {
+        return TaskExecutor.getInstance().execute(this, callback, annotationId);
+    }
+
+    public final boolean replaceCallback(Fragment callback) {
+        return mTaskExecutor.updateCallback(this, callback);
+    }
+
+    public final boolean replaceCallback(Activity callback) {
+        return mTaskExecutor.updateCallback(this, callback);
     }
 
     protected Class<RESULT> getResultClass() {

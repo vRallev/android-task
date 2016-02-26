@@ -1,3 +1,7 @@
+## 1.1.3 (2016-02-26)
+
+- Add option to replace callback context
+
 ## 1.1.2 (2016-02-22)
 
 - Bugfix

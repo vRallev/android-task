@@ -10,7 +10,7 @@ Download [the latest version][1] or grab via Gradle:
 
 ```groovy
 dependencies {
-    compile 'net.vrallev.android:android-task:1.1.2'
+    compile 'net.vrallev.android:android-task:1.1.3'
 }
 ```
 
@@ -26,8 +26,7 @@ public class MyActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		Task myTask = new MyTask();
-		int taskId = TaskExecutor.getInstance().execute(myTask, this);
+		int taskId = new MyTask().start(this);
 	}
 
 	@TaskResult
@@ -102,6 +101,28 @@ public class SimpleNoCallbackTask extends TaskNoCallback {
     @Override
     protected void executeTask() {
         // do anything
+    }
+}
+```
+
+It's possible to replace the callback, if another `Activity` or `Fragment` should handle the result.
+
+```java
+public class ReplaceCallbackActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        List<IntegerTask> tasks = TaskExecutor.getInstance().getAllTasks(IntegerTask.class);
+        for (IntegerTask task : tasks) {
+            task.replaceCallback(this);
+        }
+    }
+
+    @TaskResult
+    public void onResult(Integer integer) {
+        Toast.makeText(this, "Replaced " + integer, Toast.LENGTH_SHORT).show();
     }
 }
 ```

@@ -46,6 +46,11 @@
             android:label="@string/demo"
             android:theme="@style/AppTheme"/>
 
+        <activity
+            android:name=".ReplaceCallbackActivity"
+            android:label="@string/demo"
+            android:theme="@style/AppTheme"/>
+
     </application>
 
 </manifest>

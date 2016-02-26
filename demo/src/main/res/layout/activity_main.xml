@@ -150,5 +150,15 @@
             android:text="Test explain"
             tools:ignore="HardcodedText"/>
 
+        <Button
+            android:id="@+id/button_replace_callback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:onClick="onClick"
+            android:text="Replace callback"
+            tools:ignore="HardcodedText"/>
+
     </LinearLayout>
 </ScrollView>
