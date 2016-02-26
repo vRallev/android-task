@@ -93,6 +93,8 @@ public class DoubleFragmentActivity extends AppCompatActivity {
 
         private static final String KEY_CUSTOM_ID = "KEY_CUSTOM_ID";
 
+        private String mCustomId;
+        
         public static DoubleFragment create(String customId) {
             Bundle args = new Bundle();
             args.putString(KEY_CUSTOM_ID, customId);
@@ -101,8 +103,6 @@ public class DoubleFragmentActivity extends AppCompatActivity {
             fragment.setArguments(args);
             return fragment;
         }
-
-        private String mCustomId;
 
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {

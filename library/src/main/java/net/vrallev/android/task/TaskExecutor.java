@@ -31,6 +31,14 @@ public final class TaskExecutor {
     private static final AtomicInteger TASK_COUNTER = new AtomicInteger(0);
 
     private static TaskExecutor instance;
+    
+    private ExecutorService mExecutorService;
+    private final PostResult mPostResult;
+
+    private SparseArray<Task<?>> mTasks;
+    private TargetMethodFinder mTargetMethodFinder;
+
+    private Application mApplication;
 
     public static TaskExecutor getInstance() {
         if (instance == null) {
@@ -45,14 +53,6 @@ public final class TaskExecutor {
 
         return instance;
     }
-
-    private ExecutorService mExecutorService;
-    private final PostResult mPostResult;
-
-    private SparseArray<Task<?>> mTasks;
-    private TargetMethodFinder mTargetMethodFinder;
-
-    private Application mApplication;
 
     private TaskExecutor(ExecutorService executorService, PostResult postResult) {
         mExecutorService = executorService;
