@@ -20,11 +20,11 @@ public class ReplaceCallbackActivity extends Activity {
 
         List<IntegerTask> tasks = TaskExecutor.getInstance().getAllTasks(IntegerTask.class);
         for (IntegerTask task : tasks) {
-            task.replaceCallback(this);
+            task.replaceCallback(this, "test");
         }
     }
 
-    @TaskResult
+    @TaskResult(id = "test")
     public void onResult(Integer integer) {
         Toast.makeText(this, "Replaced " + integer, Toast.LENGTH_SHORT).show();
     }

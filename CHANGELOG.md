@@ -1,3 +1,7 @@
+## 1.1.4 (2016-03-29)
+
+- Add option to replace callback context with explicit annotation
+
 ## 1.1.3 (2016-02-26)
 
 - Add option to replace callback context

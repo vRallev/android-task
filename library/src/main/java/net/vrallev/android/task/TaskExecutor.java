@@ -178,12 +178,12 @@ public final class TaskExecutor {
         mTargetMethodFinder.invoke(target, result, taskRunnable.mTask);
     }
 
-    /*package*/ boolean updateCallback(Task<?> task, Fragment callback) {
+    /*package*/ boolean updateCallback(Task<?> task, Fragment callback, String annotationId) {
         if (callback == null) {
             return false;
         }
 
-        if (updateCallback(task, callback.getActivity())) {
+        if (updateCallback(task, callback.getActivity(), annotationId)) {
             task.setFragmentId(FragmentIdHelper.getFragmentId(callback));
             return true;
         } else {
@@ -191,7 +191,7 @@ public final class TaskExecutor {
         }
     }
 
-    /*package*/ boolean updateCallback(Task<?> task, Activity callback) {
+    /*package*/ boolean updateCallback(Task<?> task, Activity callback, String annotationId) {
         if (task == null || callback == null) {
             return false;
         }
@@ -206,6 +206,7 @@ public final class TaskExecutor {
         }
 
         task.setCachedActivity(callback);
+        task.setAnnotationId(annotationId);
         runnable.updateCallbackActivity(callback);
         return true;
     }

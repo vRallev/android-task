@@ -148,11 +148,19 @@ public abstract class Task<RESULT> {
     }
 
     public final boolean replaceCallback(Fragment callback) {
-        return mTaskExecutor.updateCallback(this, callback);
+        return replaceCallback(callback, null);
+    }
+
+    public final boolean replaceCallback(Fragment callback, String annotationId) {
+        return mTaskExecutor.updateCallback(this, callback, annotationId);
     }
 
     public final boolean replaceCallback(Activity callback) {
-        return mTaskExecutor.updateCallback(this, callback);
+        return replaceCallback(callback, null);
+    }
+
+    public final boolean replaceCallback(Activity callback, String annotationId) {
+        return mTaskExecutor.updateCallback(this, callback, annotationId);
     }
 
     protected Class<RESULT> getResultClass() {
