@@ -42,7 +42,9 @@ import java.lang.reflect.Method;
 
     public void recycle() {
         try {
-            POOL.release(this);
+            if (this != NULL_METHOD_HOLDER) {
+                POOL.release(this);
+            }
         } catch (Exception e) {
             // seeing "IllegalStateException: Already in the pool!" from time to time, then don't recycle this instance
         }
@@ -51,10 +53,10 @@ import java.lang.reflect.Method;
     @Override
     public boolean equals(Object o) {
         if (this == o) {
-        	return true;
+            return true;
         }
         if (o == null || getClass() != o.getClass()) {
-        	return false;
+            return false;
         }
 
         MethodHolder that = (MethodHolder) o;

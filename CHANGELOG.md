@@ -1,3 +1,7 @@
+## 1.1.5 (2016-04-27)
+
+- Fix bug where callback method is getting invoked with the wrong target
+
 ## 1.1.4 (2016-03-29)
 
 - Add option to replace callback context with explicit annotation

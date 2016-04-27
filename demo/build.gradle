@@ -30,5 +30,4 @@ android {
 
 dependencies {
     compile project(':library')
-    compile 'com.android.support:support-v4:23.2.0'
 }

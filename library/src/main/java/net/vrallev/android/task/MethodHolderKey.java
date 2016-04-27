@@ -69,16 +69,16 @@ import android.support.v4.util.Pools;
     @Override
     public boolean equals(Object o) {
         if (this == o) {
-        	return true;
+            return true;
         }
         if (o == null || getClass() != o.getClass()) {
-        	return false;
+            return false;
         }
 
         MethodHolderKey that = (MethodHolderKey) o;
 
         if (mTarget != null ? !mTarget.equals(that.mTarget) : that.mTarget != null) {
-        	return false;
+            return false;
         }
         if (mResultType != null ? !mResultType.equals(that.mResultType) : that.mResultType != null)
             return false;

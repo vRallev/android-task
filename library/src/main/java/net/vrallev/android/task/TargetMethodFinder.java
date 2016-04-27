@@ -17,9 +17,8 @@ import java.util.List;
 /**
  * @author rwondratschek
  */
-/*package*/
 @SuppressWarnings("unused")
-class TargetMethodFinder {
+/*package*/ class TargetMethodFinder {
 
     private static final String TAG = "TargetMethodFinder";
 

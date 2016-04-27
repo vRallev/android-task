@@ -17,6 +17,8 @@ import net.vrallev.android.task.Task;
 import net.vrallev.android.task.TaskExecutor;
 import net.vrallev.android.task.TaskResult;
 
+import java.util.Locale;
+
 /**
  * @author rwondratschek
  */
@@ -87,7 +89,7 @@ public class ViewPagerActivity extends FragmentActivity {
 
         @TaskResult
         public void onResult(String position) {
-            Toast.makeText(getActivity(), String.format("Frag %d, value %s", mPosition, position), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), String.format(Locale.US, "Frag %d, value %s", mPosition, position), Toast.LENGTH_SHORT).show();
         }
     }
 
