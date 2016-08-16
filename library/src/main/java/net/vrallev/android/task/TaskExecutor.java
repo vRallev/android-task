@@ -31,7 +31,7 @@ public final class TaskExecutor {
 
     private static final AtomicInteger TASK_COUNTER = new AtomicInteger(0);
 
-    private static TaskExecutor instance;
+    private static volatile TaskExecutor instance;
 
     public static TaskExecutor getInstance() {
         if (instance == null) {
