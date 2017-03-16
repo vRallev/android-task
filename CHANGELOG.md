@@ -1,3 +1,7 @@
+## 1.1.6 (2017-03-16)
+
+- Add workaround for changed behavior in support library when getting a child fragment manager
+
 ## 1.1.5 (2016-04-27)
 
 - Fix bug where callback method is getting invoked with the wrong target
