@@ -1,5 +1,6 @@
 package net.vrallev.android.task;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ public final class TaskExecutor {
 
     private static final AtomicInteger TASK_COUNTER = new AtomicInteger(0);
 
+    @SuppressLint("StaticFieldLeak")
     private static volatile TaskExecutor instance;
 
     public static TaskExecutor getInstance() {

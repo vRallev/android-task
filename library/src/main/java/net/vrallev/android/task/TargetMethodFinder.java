@@ -1,5 +1,6 @@
 package net.vrallev.android.task;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -172,6 +173,7 @@ import java.util.List;
         return findMethodInFragmentManager(fragment.getChildFragmentManager(), resultType, annotation, task, compareFragmentIndex);
     }
 
+    @SuppressLint("RestrictedApi")
     private static Pair<Method, Object> findMethodInFragmentManager(FragmentManager fragmentManager, Class<?> resultType,
                                                                     Class<? extends TaskResult> annotation, Task<?> task, boolean compareFragmentIndex) {
 

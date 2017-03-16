@@ -1,5 +1,6 @@
 package net.vrallev.android.task;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
@@ -187,6 +188,7 @@ public abstract class Task<RESULT> {
         return findFragment(((FragmentActivity) baseActivity).getSupportFragmentManager());
     }
 
+    @SuppressLint("RestrictedApi")
     private Fragment findFragment(FragmentManager manager) {
         List<Fragment> fragments = manager.getFragments();
         if (fragments == null) {

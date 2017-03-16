@@ -1,5 +1,6 @@
 package net.vrallev.android.task;
 
+import android.annotation.SuppressLint;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 
@@ -47,6 +48,7 @@ import java.util.List;
         return index + '/' + id + '/' + tag;
     }
 
+    @SuppressLint("RestrictedApi")
     private static String getIndex(Fragment fragment) {
         String index;
         if (fragment.getParentFragment() != null) {
