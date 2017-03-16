@@ -23,8 +23,8 @@ android {
     lintOptions {
         abortOnError true
 
-        htmlOutput file("$project.buildDir/reports/lint/lint.html")
-        xmlOutput file("$project.buildDir/reports/lint/lint.xml")
+        htmlOutput file("$project.buildDir/reports/lint/android_task_lint.html")
+        xmlOutput file("$project.buildDir/reports/lint/android_task_lint.xml")
     }
 }
 

@@ -185,7 +185,7 @@ import java.util.List;
         }
 
         for (Fragment childFragment : fragments) {
-            if (childFragment == null) {
+            if (childFragment == null || childFragment.getActivity() == null) {
                 continue;
             }
             Pair<Method, Object> pair = findMethodInFragment(childFragment, childFragment.getClass(), resultType, annotation, task, compareFragmentIndex);
