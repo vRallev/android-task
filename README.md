@@ -1,3 +1,7 @@
+# Deprecated
+
+This library is deprecated and shouldn't be used anymore. Please use something better like [RxJava](https://github.com/ReactiveX/RxJava). No more development will be taking place.
+
 Android-Task
 ============
 
