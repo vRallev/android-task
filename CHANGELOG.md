@@ -1,3 +1,7 @@
+## 1.1.7 (2017-08-17)
+
+- Add a dirty hack to make the lib compatible with Android O and support lib 26
+
 ## 1.1.6 (2017-03-16)
 
 - Add workaround for changed behavior in support library when getting a child fragment manager

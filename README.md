@@ -14,7 +14,7 @@ Download [the latest version][1] or grab via Gradle:
 
 ```groovy
 dependencies {
-    compile 'net.vrallev.android:android-task:1.1.6'
+    compile 'net.vrallev.android:android-task:1.1.7'
 }
 ```
 

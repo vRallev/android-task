@@ -185,11 +185,15 @@ public abstract class Task<RESULT> {
             return null;
         }
 
-        return findFragment(((FragmentActivity) baseActivity).getSupportFragmentManager());
+        return findFragment(FragmentHack.getFragmentManager((FragmentActivity) baseActivity));
     }
 
     @SuppressLint("RestrictedApi")
     private Fragment findFragment(FragmentManager manager) {
+        if (manager == null) {
+            return null;
+        }
+
         List<Fragment> fragments = manager.getFragments();
         if (fragments == null) {
             return null;
@@ -204,8 +208,8 @@ public abstract class Task<RESULT> {
                 return fragment;
             }
 
-            if (fragment.getChildFragmentManager() != null) {
-                Fragment child = findFragment(fragment.getChildFragmentManager());
+            if (FragmentHack.getChildFragmentManager(fragment) != null) {
+                Fragment child = findFragment(FragmentHack.getChildFragmentManager(fragment));
                 if (child != null) {
                     return child;
                 }

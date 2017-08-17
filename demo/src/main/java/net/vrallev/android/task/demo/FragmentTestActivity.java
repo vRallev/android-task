@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
@@ -20,8 +21,20 @@ public class FragmentTestActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState == null) {
-            new MyDialog().show(getSupportFragmentManager(), "Dialog");
+//        if (savedInstanceState == null) {
+//            new MyDialog().show(getSupportFragmentManager(), "Dialog");
+//        }
+        getSupportFragmentManager().beginTransaction().add(new MyFragment(), "Te").add(new MyFragment(), "ABC").commit();
+    }
+
+    public static class MyFragment extends Fragment {
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            if (savedInstanceState == null) {
+                new MyDialog().show(getChildFragmentManager(), "Dialog");
+            }
         }
     }
 

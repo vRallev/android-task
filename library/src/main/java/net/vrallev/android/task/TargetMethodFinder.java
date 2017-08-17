@@ -130,7 +130,7 @@ import java.util.List;
             return pair;
         }
 
-        return findMethodInFragmentManager(activity.getSupportFragmentManager(), resultType, annotation, task, compareFragmentIndex);
+        return findMethodInFragmentManager(FragmentHack.getFragmentManager(activity), resultType, annotation, task, compareFragmentIndex);
     }
 
     private static Pair<Method, Object> findMethodInActivity(Activity activity, Class<?> target, Class<?> resultType,
@@ -170,7 +170,7 @@ import java.util.List;
             }
         }
 
-        return findMethodInFragmentManager(fragment.getChildFragmentManager(), resultType, annotation, task, compareFragmentIndex);
+        return findMethodInFragmentManager(FragmentHack.getChildFragmentManager(fragment), resultType, annotation, task, compareFragmentIndex);
     }
 
     @SuppressLint("RestrictedApi")
