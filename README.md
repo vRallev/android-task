@@ -1,11 +1,11 @@
 # Deprecated
 
-This library is deprecated and shouldn't be used anymore. Please use something better like [RxJava](https://github.com/ReactiveX/RxJava). No more development will be taking place.
+### This library is deprecated and shouldn't be used anymore. Please use something better like [RxJava](https://github.com/ReactiveX/RxJava). No more development will be taking place.
 
-Android-Task
+~~Android-Task~~
 ============
 
-An utility library for Android to run actions in background. It handles orientation changes and delegates results to the visible `Activity`.
+~~An utility library for Android to run actions in background. It handles orientation changes and delegates results to the visible `Activity`.~~
 
 Download
 --------
